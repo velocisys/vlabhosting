@@ -1,0 +1,9 @@
+/*
+Theme Name:     emyui-child
+Template:       emyui
+
+This is the child theme for emyui theme, generated with Generate Child Theme plugin by catchthemes.
+
+Right to Left text support.
+*/
+@import url("../twentyseventeen/rtl.css");
