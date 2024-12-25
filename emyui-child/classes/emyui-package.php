@@ -1,11 +1,39 @@
 <?php
 /**
+ * 24-12-2024
+ * 
+ * Register Package product type
+ **/
+add_action( 'init', 'emyui_register_package_product_type' );
+function emyui_register_package_product_type() {
+    class WC_Product_Package extends WC_Product {
+        public function __construct( $product ) {
+            $this->product_type = 'package';
+            parent::__construct( $product );
+        }
+    }
+}
+
+/**
+ * 25-12-2024
+ * 
+ * Load New Product Type Class
+ **/
+add_filter( 'woocommerce_product_class', 'emyui_product_class', 10, 2 ); 
+function emyui_product_class( $classname, $product_type ) {
+    if( $product_type == 'package' ){
+        $classname = 'WC_Product_Package';
+    }
+    return $classname;
+}
+
+/**
  * 18-12-2024
  * 
  * Class EMYUI_Package_Product
  * Registers a custom WooCommerce product type: Package
  */
-class EMYUI_Package_Product extends WC_Product {
+class EMYUI_Package_Product {
     private static $initialized = false;
 
     /**
@@ -17,22 +45,41 @@ class EMYUI_Package_Product extends WC_Product {
         }
 
         add_filter('product_type_selector', array(__CLASS__, 'emyui_add_package_product_type'));
-        add_action('woocommerce_product_options_general_product_data', array(__CLASS__, 'emyui_add_package_fields'));
         add_action('woocommerce_process_product_meta', array(__CLASS__, 'emyui_save_package_fields'));
         add_action('woocommerce_single_product_summary', array(__CLASS__, 'emyui_display_package_fields'), 20);
+        add_filter('woocommerce_product_data_tabs', array(__CLASS__, 'emyui_add_package_options_tab'));
+        add_action('woocommerce_product_data_panels', array(__CLASS__, 'emyui_add_package_fields'));
+        add_action( "woocommerce_package_add_to_cart", array(__CLASS__, 'emyui_package_add_to_cart'));
         self::$initialized = true;
     }
 
     /**
-     * 18-12-2024
+     * 25-12-2024
      * 
-     * Register the custom product type: Package.
+     * Add to cart buttton add on packages
+     **/
+    public function emyui_package_add_to_cart(){
+        do_action('woocommerce_simple_add_to_cart');
+    }
+
+    /**
+     * Add a custom tab for Package product type.
+     *
+     * @param array $tabs
+     * @return array
      */
-    public function __construct($product = null) {
-        parent::__construct($product);
-        $this->set_props([
-            'type' => 'package',
-        ]);
+    public static function emyui_add_package_options_tab($tabs) {
+        $tabs['inventory']['class'][]       = 'hide_if_package';
+        $tabs['shipping']['class'][]        = 'hide_if_package';
+        $tabs['linked_product']['class'][]  = 'hide_if_package';
+        $tabs['attribute']['class'][]       = 'hide_if_package';
+        $tabs['package_options'] = [
+            'label'    => __('Package Options', 'emyui'),
+            'target'   => 'package_options_data',
+            'class'    => ['show_if_package'],
+            'priority' => 50,
+        ];
+        return $tabs;
     }
 
     /**
@@ -52,22 +99,106 @@ class EMYUI_Package_Product extends WC_Product {
      * 
      * Add custom fields for Package product type in the admin.
      */
+
     public static function emyui_add_package_fields() {
-        echo '<div class="options_group show_if_package">';
-            woocommerce_wp_text_input([
-                'id'          => '_package_disk_space',
-                'label'       => __('Disk Space (MB)', 'emyui'),
-                'description' => __('Enter the disk space included in this package.', 'emyui'),
-                'type'        => 'number',
-                'desc_tip'    => true,
-            ]);
-            woocommerce_wp_text_input([
-                'id'          => '_package_bandwidth',
-                'label'       => __('Bandwidth (MB)', 'emyui'),
-                'description' => __('Enter the bandwidth included in this package.', 'emyui'),
-                'type'        => 'number',
-                'desc_tip'    => true,
-            ]);
+        wc_enqueue_js( "     
+          $(document.body).on('woocommerce-product-type-change',function(event,type){
+            if(type=='package') {
+                $('.general_tab').show();
+                $('.pricing').show();         
+            }
+            });");
+        global $product_object;
+        if( $product_object && 'package' === $product_object->get_type() ) {
+              wc_enqueue_js( "$('.general_tab').show(); $('.pricing').show();");
+        }
+        echo '<div id="package_options_data" class="panel woocommerce_options_panel">';
+            echo '<div class="options_group">';
+                woocommerce_wp_text_input([
+                    'id'          => '_package_quota',
+                    'label'       => __('Package Quota', 'emyui'),
+                    'description' => __('Enter the disk space included in this package.', 'emyui'),
+                    'type'        => 'text',
+                    'desc_tip'    => true,
+                ]);
+                woocommerce_wp_text_input([
+                    'id'          => '_package_maxftp',
+                    'label'       => __('Max FTP Accounts', 'emyui'),
+                    'description' => __('Enter the number of FTP accounts included in this package.', 'emyui'),
+                    'type'        => 'text',
+                    'desc_tip'    => true,
+                ]);
+                woocommerce_wp_text_input([
+                    'id'          => '_package_maxpassengerapps',
+                    'label'       => __('Max Passenger Apps', 'emyui'),
+                    'description' => __('Enter the maximum number of Passenger apps allowed.', 'emyui'),
+                    'type'        => 'number',
+                    'desc_tip'    => true,
+                ]);
+                woocommerce_wp_text_input([
+                    'id'          => '_package_max_email_acct_quota',
+                    'label'       => __('Max Email Account Quota', 'emyui'),
+                    'description' => __('Enter the email account quota for this package.', 'emyui'),
+                    'type'        => 'text',
+                    'desc_tip'    => true,
+                ]);
+                woocommerce_wp_text_input([
+                    'id'          => '_package_max_lst',
+                    'label'       => __('Max Mailing Lists', 'emyui'),
+                    'description' => __('Enter the maximum number of mailing lists allowed.', 'emyui'),
+                    'type'        => 'number',
+                    'desc_tip'    => true,
+                ]);
+                woocommerce_wp_text_input([
+                    'id'          => '_package_bwlimit',
+                    'label'       => __('Bandwidth Limit', 'emyui'),
+                    'description' => __('Enter the bandwidth limit for this package.', 'emyui'),
+                    'type'        => 'text',
+                    'desc_tip'    => true,
+                ]);
+                woocommerce_wp_text_input([
+                    'id'          => '_package_maxaddon',
+                    'label'       => __('Max Addon Domains', 'emyui'),
+                    'description' => __('Enter the maximum number of addon domains allowed.', 'emyui'),
+                    'type'        => 'number',
+                    'desc_tip'    => true,
+                ]);
+                woocommerce_wp_text_input([
+                    'id'          => '_package_maxsql',
+                    'label'       => __('Max SQL Databases', 'emyui'),
+                    'description' => __('Enter the maximum number of SQL databases allowed.', 'emyui'),
+                    'type'        => 'number',
+                    'desc_tip'    => true,
+                ]);
+                woocommerce_wp_text_input([
+                    'id'          => '_package_maxpop',
+                    'label'       => __('Max POP Accounts', 'emyui'),
+                    'description' => __('Enter the maximum number of POP accounts allowed.', 'emyui'),
+                    'type'        => 'number',
+                    'desc_tip'    => true,
+                ]);
+                woocommerce_wp_text_input([
+                    'id'          => '_package_maxpark',
+                    'label'       => __('Max Parked Domains', 'emyui'),
+                    'description' => __('Enter the maximum number of parked domains allowed.', 'emyui'),
+                    'type'        => 'number',
+                    'desc_tip'    => true,
+                ]);
+                woocommerce_wp_text_input([
+                    'id'          => '_package_maxsub',
+                    'label'       => __('Max Subdomains', 'emyui'),
+                    'description' => __('Enter the maximum number of subdomains allowed.', 'emyui'),
+                    'type'        => 'number',
+                    'desc_tip'    => true,
+                ]);
+                woocommerce_wp_text_input([
+                    'id'          => '_package_max_team_users',
+                    'label'       => __('Max Team Users', 'emyui'),
+                    'description' => __('Enter the maximum number of team users allowed.', 'emyui'),
+                    'type'        => 'number',
+                    'desc_tip'    => true,
+                ]);
+            echo '</div>';
         echo '</div>';
     }
 
@@ -78,7 +209,20 @@ class EMYUI_Package_Product extends WC_Product {
      * @param int $post_id
      */
     public static function emyui_save_package_fields($post_id) {
-        $fields = ['_package_disk_space', '_package_bandwidth'];
+        $fields = [
+            '_package_quota',
+            '_package_maxftp',
+            '_package_maxpassengerapps',
+            '_package_max_email_acct_quota',
+            '_package_max_lst',
+            '_package_bwlimit',
+            '_package_maxaddon',
+            '_package_maxsql',
+            '_package_maxpop',
+            '_package_maxpark',
+            '_package_maxsub',
+            '_package_max_team_users',
+        ];
         foreach ($fields as $field) {
             if (isset($_POST[$field])) {
                 update_post_meta($post_id, $field, sanitize_text_field($_POST[$field]));
@@ -94,12 +238,12 @@ class EMYUI_Package_Product extends WC_Product {
     public static function emyui_display_package_fields() {
         global $product;
         if ($product->get_type() === 'package') {
-            $disk_space = self::get_package_meta($product->get_id(), '_package_disk_space');
-            $bandwidth  = self::get_package_meta($product->get_id(), '_package_bandwidth');
-            if ($disk_space || $bandwidth) {
+            $packageQuota = self::get_package_meta($product->get_id(), '_package_quota');
+            $pacakgeFtp  = self::get_package_meta($product->get_id(), '_package_maxftp');
+            if ($packageQuota || $pacakgeFtp) {
                 echo '<div class="woocommerce-package-details">';
-                echo '<p><strong>' . __('Disk Space:', 'emyui') . '</strong> ' . esc_html($disk_space) . ' MB</p>';
-                echo '<p><strong>' . __('Bandwidth:', 'emyui') . '</strong> ' . esc_html($bandwidth) . ' MB</p>';
+                echo '<p><strong>' . __('Package Qupta:', 'emyui') . '</strong> ' . esc_html($packageQupta) . ' MB</p>';
+                echo '<p><strong>' . __('Pacakge Ftp:', 'emyui') . '</strong> ' . esc_html($pacakgeFtp) . ' MB</p>';
                 echo '</div>';
             }
         }
@@ -117,5 +261,4 @@ class EMYUI_Package_Product extends WC_Product {
         return get_post_meta($product_id, $key, true);
     }
 }
-
 EMYUI_Package_Product::init();

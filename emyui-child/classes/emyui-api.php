@@ -16,7 +16,7 @@ class emyui_api{
    * Constructor call
    **/
   public function __construct(){
-    //add_action('admin_init', array($this, 'emyui_create_or_update_woocommerce_package_products'));
+    add_action('admin_init', array($this, 'emyui_create_or_update_package'));
   }
 
   /**
@@ -43,10 +43,10 @@ class emyui_api{
     }
     $body = wp_remote_retrieve_body($response);
     $data = json_decode($body, true);
-    if(!isset($data['error_data']['whm_api_error']['package']) || $data['error_data']['whm_api_error']['package'] !== 1){
-      return new WP_Error('whm_api_error', 'Failed to retrieve packages', $data);
+    if(isset($data['package']) && is_array($data['package'])) {
+        return $data['package'];
     }
-    return $data['data'];
+    return new WP_Error('whm_api_error', 'Failed to retrieve packages', $data);
   }
 
 /**
@@ -80,11 +80,8 @@ class emyui_api{
    * 
    * Create WooCommerce products based on the WHM packages
    **/
-  public function emyui_create_or_update_woocommerce_package_products() {
+  public function emyui_create_or_update_package() {
     $packages = $this->emyui_get_whm_packages();
-    echo '<pre>';
-    print_r( $packages );
-    die;
     if(is_wp_error($packages)){
       error_log( 'Error fetching WHM packages: ' . $packages->get_error_message() );
       return;
@@ -93,30 +90,55 @@ class emyui_api{
       foreach( $packages as $package ){
         $existing_product_id = wc_get_product_id_by_sku( $package['name'] );
         if($existing_product_id){
-          $product = wc_get_product( $existing_product_id );
-          if( $product->get_type() !== 'package' ){
-            $product->set_type( 'package' );
+          $product = wc_get_product($existing_product_id);
+          if($product){
+            $product->set_name( $package['name'] );
+            $product->set_regular_price( $package['price'] ?? '0' );
+            $product->set_description( $package['description'] ?? '' );
+            $product->save();
+            wp_set_object_terms($existing_product_id, 'package', 'product_type');
+            $this->emyui_update_package_meta($existing_product_id, $package);
           }
-          $product->set_name( $package['name'] );
-          $product->set_regular_price( $package['price'] ?? '0' );
-          $product->set_description( $package['description'] ?? 'No description available' );
-          $product->save();
-          update_post_meta( $existing_product_id, '_package_disk_space', $package['diskquota'] );
-          update_post_meta( $existing_product_id, '_package_bandwidth', $package['bandwidth'] );
           error_log( "Package product updated: {$package['name']} (ID: $existing_product_id)" );
         }else{
-          $product = new EMYUI_Package_Product();
+          $product = new WC_Product_Simple();
           $product->set_name( $package['name'] );
           $product->set_sku( $package['name'] );
           $product->set_regular_price( $package['price'] ?? '0' );
-          $product->set_description( $package['description'] ?? 'No description available' );
+          $product->set_description( $package['description'] ?? '' );
           $product_id = $product->save();
-          update_post_meta( $product_id, '_package_disk_space', $package['diskquota'] );
-          update_post_meta( $product_id, '_package_bandwidth', $package['bandwidth'] );
+          wp_set_object_terms($product_id, 'package', 'product_type');
+          $this->emyui_update_package_meta($product_id, $package);
           error_log( "Package product created: {$package['name']} (ID: $product_id)" );
         }
       }
     }
+  }
+
+  /**
+   * Update custom meta fields for a package product.
+   *
+   * @param int   $product_id
+   * @param array $package
+   **/
+  private function emyui_update_package_meta($product_id, $package) {
+      $meta_fields = [
+          '_package_quota'                => $package['QUOTA'] ?? '',
+          '_package_maxpassengerapps'     => $package['MAXPASSENGERAPPS'] ?? '',
+          '_package_maxftp'               => $package['MAXFTP'] ?? '',
+          '_package_max_email_acct_quota' => $package['MAX_EMAILACCT_QUOTA'] ?? '',
+          '_package_max_lst'              => $package['MAXLST'] ?? '',
+          '_package_bwlimit'              => $package['BWLIMIT'] ?? '',
+          '_package_maxaddon'             => $package['MAXADDON'] ?? '',
+          '_package_maxsql'               => $package['MAXSQL'] ?? '',
+          '_package_maxpop'               => $package['MAXPOP'] ?? '',
+          '_package_maxpark'              => $package['MAXPARK'] ?? '',
+          '_package_maxsub'               => $package['MAXSUB'] ?? '',
+          '_package_max_team_users'       => $package['MAX_TEAM_USERS'] ?? '',
+      ];
+      foreach ($meta_fields as $meta_key => $meta_value) {
+          update_post_meta($product_id, $meta_key, sanitize_text_field($meta_value));
+      }
   }
 }
 emyui_api::instance();
