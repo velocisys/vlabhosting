@@ -50,6 +50,7 @@ class EMYUI_Package_Product {
         add_filter('woocommerce_product_data_tabs', array(__CLASS__, 'emyui_add_package_options_tab'));
         add_action('woocommerce_product_data_panels', array(__CLASS__, 'emyui_add_package_fields'));
         add_action( "woocommerce_package_add_to_cart", array(__CLASS__, 'emyui_package_add_to_cart'));
+        add_shortcode('package_pricing', array(__CLASS__, 'emyui_package_pricing_shortcode'));
         self::$initialized = true;
     }
 
@@ -259,6 +260,37 @@ class EMYUI_Package_Product {
      */
     public static function get_package_meta($product_id, $key) {
         return get_post_meta($product_id, $key, true);
+    }
+
+    /**
+     * 31-12-2024
+     * 
+     * Create a package shortcode
+     **/
+    public static function emyui_package_pricing_shortcode() {
+        $args = array(
+            'post_type' => 'product',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'tax_query' => array(
+                array(
+                    'taxonomy'  => 'product_type',
+                    'field'     => 'slug',
+                    'terms'     => 'package'
+                )
+            )
+        );
+        $products   = new WP_Query($args);
+        $output     = '';
+        if($products->have_posts()){
+            ob_start();
+            require_once(EMUI_VIEWS.'/choose-package.php');
+            $output = ob_get_clean();
+        }else{
+            $output = '<p>No packages found.</p>';
+        }
+        wp_reset_postdata();
+        return $output;
     }
 }
 EMYUI_Package_Product::init();

@@ -17,6 +17,7 @@ define('EMUI_CSS',      EMUI_ASSETS . '/css');
 define('EMUI_JS',       EMUI_ASSETS . '/js');
 define('EMUI_IMAGES',   EMUI_ASSETS . '/images');
 define('EMUI_CLASSES',  EMUI_DIR . '/classes');
+define('EMUI_VIEWS',  EMUI_DIR . '/views');
 require_once(EMUI_CLASSES.'/emyui-main.php');
 require_once(EMUI_CLASSES.'/emyui-api.php');
 require_once(EMUI_CLASSES.'/emyui-package.php');

@@ -49,32 +49,6 @@ class emyui_api{
     return new WP_Error('whm_api_error', 'Failed to retrieve packages', $data);
   }
 
-/**
- * 18-12-2024
- * 
- * Display WHM packages in a WordPress admin page
- **/
-  function display_whm_packages_admin_page() {
-      $packages = $this->emyui_get_whm_packages();
-      if(is_wp_error($packages)){
-          echo '<div class="notice notice-error"><p>' . esc_html($packages->get_error_message()) . '</p></div>';
-          return;
-      }
-      echo '<h1>WHM Packages</h1>';
-      echo '<table class="widefat striped">';
-      echo '<thead><tr><th>Package Name</th><th>Disk Space</th><th>Bandwidth</th></tr></thead>';
-      echo '<tbody>';
-      foreach ($packages as $package) {
-          echo '<tr>';
-          echo '<td>' . esc_html($package['name']) . '</td>';
-          echo '<td>' . esc_html($package['diskquota']) . '</td>';
-          echo '<td>' . esc_html($package['bandwidth']) . '</td>';
-          echo '</tr>';
-      }
-      echo '</tbody>';
-      echo '</table>';
-  }
-
   /**
    * 21-12-2024
    * 
