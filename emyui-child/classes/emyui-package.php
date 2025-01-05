@@ -50,7 +50,9 @@ class EMYUI_Package_Product {
         add_filter('woocommerce_product_data_tabs', array(__CLASS__, 'emyui_add_package_options_tab'));
         add_action('woocommerce_product_data_panels', array(__CLASS__, 'emyui_add_package_fields'));
         add_action( "woocommerce_package_add_to_cart", array(__CLASS__, 'emyui_package_add_to_cart'));
-        add_shortcode('package_pricing', array(__CLASS__, 'emyui_package_pricing_shortcode'));
+        add_shortcode( 'package_pricing', array(__CLASS__, 'emyui_package_pricing_shortcode'));
+        add_shortcode( 'package_domain', array(__CLASS__, 'emyui_package_submit_shortcode'));
+        add_action( 'wp', array(__CLASS__, 'emyui_process_submission' ));
         self::$initialized = true;
     }
 
@@ -199,6 +201,20 @@ class EMYUI_Package_Product {
                     'type'        => 'number',
                     'desc_tip'    => true,
                 ]);
+                woocommerce_wp_select( array(
+                    'id'            => '_package_hosting_plan',
+                    'label'         => __( 'Hosting Plan', 'emyui' ),
+                    'description'   => __( 'Choose an option from the dropdown.', 'emyui' ),
+                    'desc_tip'      => true,
+                    'options'       => array(
+                        ''               => __( 'Choose once', 'emyui' ),
+                        'shared_hosting' => __( 'Shared Hosting', 'emyui' ),
+                        'vps'            => __( 'VPS', 'emyui' ),
+                        'cloud'          => __( 'Cloud', 'emyui' ),
+                        'wp'             => __( 'WordPress', 'emyui' ),
+                        'gps'            => __( 'Gps', 'emyui' ),
+                    )
+                ) );
             echo '</div>';
         echo '</div>';
     }
@@ -223,6 +239,7 @@ class EMYUI_Package_Product {
             '_package_maxpark',
             '_package_maxsub',
             '_package_max_team_users',
+            '_package_hosting_plan'
         ];
         foreach ($fields as $field) {
             if (isset($_POST[$field])) {
@@ -267,7 +284,24 @@ class EMYUI_Package_Product {
      * 
      * Create a package shortcode
      **/
-    public static function emyui_package_pricing_shortcode() {
+    public static function emyui_package_pricing_shortcode($atts) {
+        $atts = shortcode_atts(
+            array(
+                'hosting_plan' => '',
+            ),
+            $atts
+        );
+        if(empty($atts['hosting_plan'])){
+            return sprintf('<p class="emyui-no-package-found">%s</p>', __('No packages found. Please select a hosting plan.', 'emyui'));
+        }
+        $meta_query = array();
+        if(!empty($atts['hosting_plan'])){
+            $meta_query[] = array(
+                'key'     => '_package_hosting_plan',
+                'value'   => sanitize_text_field($atts['hosting_plan']),
+                'compare' => '=',
+            );
+        }
         $args = array(
             'post_type' => 'product',
             'post_status' => 'publish',
@@ -278,7 +312,8 @@ class EMYUI_Package_Product {
                     'field'     => 'slug',
                     'terms'     => 'package'
                 )
-            )
+            ),
+            'meta_query' => $meta_query,
         );
         $products   = new WP_Query($args);
         $output     = '';
@@ -288,6 +323,44 @@ class EMYUI_Package_Product {
             $output = ob_get_clean();
         }else{
             $output = '<p>No packages found.</p>';
+        }
+        wp_reset_postdata();
+        return $output;
+    }
+
+    /**
+     * 01-05-2024
+     * 
+     * Form submission
+     **/
+    public static function emyui_process_submission(){
+        if(!isset( $_POST['submit_package'] ) || !isset($_POST['emyui_package_nonce'])){
+            return;
+        }
+        if(!wp_verify_nonce( $_POST['emyui_package_nonce'], 'emyui_package_submission' )) {
+            wp_die( __( 'Security check failed', 'custom-job' ) );
+        }
+        $package_id = isset($_POST['package_id']) ? sanitize_text_field($_POST['package_id']) : '';
+        if(is_wp_error($package_id)){
+            wp_die( __( 'Failed to submit the package', 'emyui' ) );
+        }
+        wp_redirect(site_url('package-submit'));
+        exit;
+    }
+
+    /**
+     * 01-05-2024
+     * 
+     * Domain shortcode
+     **/
+    public static function emyui_package_submit_shortcode() {
+        $package_id = isset($_POST['package_id']) ? sanitize_text_field($_POST['package_id']) : '';
+        if(!empty($package_id)){
+            ob_start();
+            require_once(EMUI_VIEWS.'/package-submit.php');
+            $output = ob_get_clean();
+        }else{
+            $output = sprintf('<p>%s</p>', __('Packages not selected.', 'emyui'));
         }
         wp_reset_postdata();
         return $output;
