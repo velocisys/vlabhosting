@@ -17,6 +17,7 @@ class emyui_api{
    **/
   public function __construct(){
     add_action('admin_init', array($this, 'emyui_create_or_update_package'));
+    add_action('init', array($this, 'emyui_get_domain_whois_data1'));
   }
 
   /**
@@ -95,24 +96,57 @@ class emyui_api{
    * @param int   $product_id
    * @param array $package
    **/
-  private function emyui_update_package_meta($product_id, $package) {
+    private function emyui_update_package_meta($product_id, $package) {
       $meta_fields = [
-          '_package_quota'                => $package['QUOTA'] ?? '',
-          '_package_maxpassengerapps'     => $package['MAXPASSENGERAPPS'] ?? '',
-          '_package_maxftp'               => $package['MAXFTP'] ?? '',
-          '_package_max_email_acct_quota' => $package['MAX_EMAILACCT_QUOTA'] ?? '',
-          '_package_max_lst'              => $package['MAXLST'] ?? '',
-          '_package_bwlimit'              => $package['BWLIMIT'] ?? '',
-          '_package_maxaddon'             => $package['MAXADDON'] ?? '',
-          '_package_maxsql'               => $package['MAXSQL'] ?? '',
-          '_package_maxpop'               => $package['MAXPOP'] ?? '',
-          '_package_maxpark'              => $package['MAXPARK'] ?? '',
-          '_package_maxsub'               => $package['MAXSUB'] ?? '',
-          '_package_max_team_users'       => $package['MAX_TEAM_USERS'] ?? '',
+        '_package_quota'                => $package['QUOTA'] ?? '',
+        '_package_maxpassengerapps'     => $package['MAXPASSENGERAPPS'] ?? '',
+        '_package_maxftp'               => $package['MAXFTP'] ?? '',
+        '_package_max_email_acct_quota' => $package['MAX_EMAILACCT_QUOTA'] ?? '',
+        '_package_max_lst'              => $package['MAXLST'] ?? '',
+        '_package_bwlimit'              => $package['BWLIMIT'] ?? '',
+        '_package_maxaddon'             => $package['MAXADDON'] ?? '',
+        '_package_maxsql'               => $package['MAXSQL'] ?? '',
+        '_package_maxpop'               => $package['MAXPOP'] ?? '',
+        '_package_maxpark'              => $package['MAXPARK'] ?? '',
+        '_package_maxsub'               => $package['MAXSUB'] ?? '',
+        '_package_max_team_users'       => $package['MAX_TEAM_USERS'] ?? '',
       ];
       foreach ($meta_fields as $meta_key => $meta_value) {
-          update_post_meta($product_id, $meta_key, sanitize_text_field($meta_value));
+        update_post_meta($product_id, $meta_key, sanitize_text_field($meta_value));
       }
-  }
+    }
+
+    /**
+     * 01-07-2025
+     * 
+     * Domain API implement
+     **/
+      public function emyui_get_domain_whois_data($domain) {
+        $domainArr  = [];
+        $api_key    = '5D4E1EDD4D6031FC184049BB0A1423A6';
+        $api_url    = "https://api.ip2whois.com/v2?key={$api_key}&domain={$domain}";
+        $response   = wp_remote_get($api_url);
+        if(is_wp_error($response)){
+          $domainArr['error'] = $response->get_error_message();
+        }
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
+        if(isset($data['error']['error_message'])){
+          $domainArr['error'] =  $data['error']['error_message'];
+        }else{
+          $domainArr['domain_name'] = $data['domain'];
+          $domainArr['domain_id']   = $data['domain_id'];
+          $domainArr['response']   = $data;
+        }
+        return $domainArr;
+      }
+      public function emyui_get_domain_whois_data1(){
+        if(isset($_GET['test']) && $_GET['test'] == 1){
+            $data = $this->emyui_get_domain_whois_data('techdata.co.in');
+            echo '<pre>';
+            print_r($data);
+            die();
+        }
+      }
 }
 emyui_api::instance();

@@ -53,6 +53,8 @@ class EMYUI_Package_Product {
         add_shortcode( 'package_pricing', array(__CLASS__, 'emyui_package_pricing_shortcode'));
         add_shortcode( 'package_domain', array(__CLASS__, 'emyui_package_submit_shortcode'));
         add_action( 'wp', array(__CLASS__, 'emyui_process_submission' ));
+        add_action( 'wp_ajax_emyui_domain_search', array(__CLASS__, 'emyui_domain_search' ));
+        add_action( 'wp_ajax_nopriv_emyui_domain_search', array(__CLASS__, 'emyui_domain_search' ));
         self::$initialized = true;
     }
 
@@ -334,18 +336,14 @@ class EMYUI_Package_Product {
      * Form submission
      **/
     public static function emyui_process_submission(){
-        if(!isset( $_POST['submit_package'] ) || !isset($_POST['emyui_package_nonce'])){
-            return;
+        if(isset($_POST['emyui_package_nonce']) && wp_verify_nonce( $_POST['emyui_package_nonce'], 'emyui_package_submission' )) {
+            $package_id = isset($_POST['submit_package']) ? sanitize_text_field($_POST['submit_package']) : '';
+            if(!empty($package_id)){
+                self::emyui_set_cookie('package_id', $package_id);
+                wp_redirect(site_url('package-submit'));
+                exit;
+            }
         }
-        if(!wp_verify_nonce( $_POST['emyui_package_nonce'], 'emyui_package_submission' )) {
-            wp_die( __( 'Security check failed', 'custom-job' ) );
-        }
-        $package_id = isset($_POST['package_id']) ? sanitize_text_field($_POST['package_id']) : '';
-        if(is_wp_error($package_id)){
-            wp_die( __( 'Failed to submit the package', 'emyui' ) );
-        }
-        wp_redirect(site_url('package-submit'));
-        exit;
     }
 
     /**
@@ -354,7 +352,7 @@ class EMYUI_Package_Product {
      * Domain shortcode
      **/
     public static function emyui_package_submit_shortcode() {
-        $package_id = isset($_POST['package_id']) ? sanitize_text_field($_POST['package_id']) : '';
+        $package_id = isset($_COOKIE['package_id']) ? sanitize_text_field($_COOKIE['package_id']) : '';
         if(!empty($package_id)){
             ob_start();
             require_once(EMUI_VIEWS.'/package-submit.php');
@@ -364,6 +362,69 @@ class EMYUI_Package_Product {
         }
         wp_reset_postdata();
         return $output;
+    }
+
+    /**
+     * 01-06-2024
+     * 
+     * Set the cookies values
+     **/
+    public static function emyui_set_cookie($cookie_name, $cookie_value) {
+        $expiration_time = time() + 3600;
+        setcookie($cookie_name, $cookie_value, $expiration_time, COOKIEPATH, COOKIE_DOMAIN);
+    }
+
+    /**
+     * 0106-2024
+     * 
+     * Domain search
+     **/
+    public static function emyui_domain_search(){
+        if(isset($_POST['action']) && $_POST['action'] == 'emyui_domain_search'){
+            $domainsearch = isset($_POST['domainsearch']) ? sanitize_text_field($_POST['domainsearch']) : '';
+            if(empty($domainsearch)){
+                wp_send_json_error(
+                    array(
+                        'success' => false,
+                        'msg' => __('This field is reqired.', 'emyui')
+                    )
+                );
+                exit();
+            }else{
+                $emyui_api = emyui_api::instance();
+                $data = $emyui_api->emyui_get_domain_whois_data($domainsearch);
+                if(isset($data['error']) && !empty($data['error'])){
+                    wp_send_json_error(
+                        array(
+                            'success'   => false,
+                            'msg'       => $data['error']
+                        )
+                    );
+                    exit();
+                }else{
+                    $package_step       = 1;
+                    $package_id         = isset($_COOKIE['package_id'])?sanitize_text_field($_COOKIE['package_id']):'';
+                    $package_domain     = isset($data['domain_name'])?sanitize_text_field($data['domain_name']):'';
+                    $package_domain_id  = isset($data['domain_id'])?sanitize_text_field($data['domain_id']):'';
+                    if($package_id && $package_domain && $package_domain_id){
+                        wp_send_json_success(
+                            array(
+                                'success'           => true,
+                                'package_id'        => $package_id,
+                                'package_domain'    => $package_domain,
+                                'package_domain_id' => $package_domain_id,
+                                'package_step'      => $package_step,
+                            )
+                        );
+                    }else{
+                        wp_send_json_error();
+                    }
+                    exit();
+                }
+            }
+        }
+        wp_send_json_error();
+        exit();
     }
 }
 EMYUI_Package_Product::init();
