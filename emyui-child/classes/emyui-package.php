@@ -49,22 +49,16 @@ class EMYUI_Package_Product {
         add_action('woocommerce_single_product_summary', array(__CLASS__, 'emyui_display_package_fields'), 20);
         add_filter('woocommerce_product_data_tabs', array(__CLASS__, 'emyui_add_package_options_tab'));
         add_action('woocommerce_product_data_panels', array(__CLASS__, 'emyui_add_package_fields'));
-        add_action( "woocommerce_package_add_to_cart", array(__CLASS__, 'emyui_package_add_to_cart'));
         add_shortcode( 'package_pricing', array(__CLASS__, 'emyui_package_pricing_shortcode'));
         add_shortcode( 'package_domain', array(__CLASS__, 'emyui_package_submit_shortcode'));
         add_action( 'wp', array(__CLASS__, 'emyui_process_submission' ));
         add_action( 'wp_ajax_emyui_domain_search', array(__CLASS__, 'emyui_domain_search' ));
         add_action( 'wp_ajax_nopriv_emyui_domain_search', array(__CLASS__, 'emyui_domain_search' ));
+        add_action( 'woocommerce_checkout_create_order_line_item', array( __CLASS__, 'emyui_order_line_item' ), 20, 4 );
+        add_filter( 'woocommerce_get_item_data', array( __CLASS__, 'emyui_get_item_data' ), 10, 2 );
+        add_filter('woocommerce_product_get_name', array( __CLASS__,'emyui_modify_product_titles'), 10, 2);
+        add_filter( 'woocommerce_is_sold_individually', array( __CLASS__,'emyui_remove_all_quantity_fields'), 10, 2 );
         self::$initialized = true;
-    }
-
-    /**
-     * 25-12-2024
-     * 
-     * Add to cart buttton add on packages
-     **/
-    public function emyui_package_add_to_cart(){
-        do_action('woocommerce_simple_add_to_cart');
     }
 
     /**
@@ -305,9 +299,11 @@ class EMYUI_Package_Product {
             );
         }
         $args = array(
-            'post_type' => 'product',
-            'post_status' => 'publish',
+            'post_type'     => 'product',
+            'post_status'   => 'publish',
             'posts_per_page' => -1,
+            'orderby'        => 'menu_order',
+            'order'          => 'ASC',
             'tax_query' => array(
                 array(
                     'taxonomy'  => 'product_type',
@@ -339,6 +335,9 @@ class EMYUI_Package_Product {
         if(isset($_POST['emyui_package_nonce']) && wp_verify_nonce( $_POST['emyui_package_nonce'], 'emyui_package_submission' )) {
             $package_id = isset($_POST['submit_package']) ? sanitize_text_field($_POST['submit_package']) : '';
             if(!empty($package_id)){
+                if(WC()->cart->get_cart_contents_count() > 0 ){
+                    WC()->cart->empty_cart();
+                }
                 self::emyui_set_cookie('package_id', $package_id);
                 wp_redirect(site_url('package-submit'));
                 exit;
@@ -358,7 +357,11 @@ class EMYUI_Package_Product {
             require_once(EMUI_VIEWS.'/package-submit.php');
             $output = ob_get_clean();
         }else{
-            $output = sprintf('<p>%s</p>', __('Packages not selected.', 'emyui'));
+            $html_message = sprintf(
+                __('No package selected. Please <a href="%s">select a package</a> before proceeding.', 'emyui'),
+                esc_url(home_url())
+            );
+            $output = sprintf('<div class="woocommerce-error" role="alert"><p>%s</p></div>', $html_message);
         }
         wp_reset_postdata();
         return $output;
@@ -391,40 +394,137 @@ class EMYUI_Package_Product {
                 );
                 exit();
             }else{
-                $emyui_api = emyui_api::instance();
-                $data = $emyui_api->emyui_get_domain_whois_data($domainsearch);
-                if(isset($data['error']) && !empty($data['error'])){
+                $domain_selected    = isset($_POST['domain_selected'])?sanitize_text_field($_POST['domain_selected']):'';
+                $domain_tlds        = isset($_POST['domain_tlds'])?sanitize_text_field($_POST['domain_tlds']):'';
+                $package_id         = isset($_COOKIE['package_id'])?sanitize_text_field($_COOKIE['package_id']):'';
+                if(!$package_id || !self::emyui_is_valid_package($package_id)){
                     wp_send_json_error(
                         array(
-                            'success'   => false,
-                            'msg'       => $data['error']
+                            'success' => false,
+                            'msg' => __('Invalid package selected.', 'emyui')
                         )
                     );
                     exit();
-                }else{
-                    $package_step       = 1;
-                    $package_id         = isset($_COOKIE['package_id'])?sanitize_text_field($_COOKIE['package_id']):'';
-                    $package_domain     = isset($data['domain_name'])?sanitize_text_field($data['domain_name']):'';
-                    $package_domain_id  = isset($data['domain_id'])?sanitize_text_field($data['domain_id']):'';
-                    if($package_id && $package_domain && $package_domain_id){
-                        wp_send_json_success(
-                            array(
-                                'success'           => true,
-                                'package_id'        => $package_id,
-                                'package_domain'    => $package_domain,
-                                'package_domain_id' => $package_domain_id,
-                                'package_step'      => $package_step,
-                            )
-                        );
-                    }else{
-                        wp_send_json_error();
+                }
+                if($package_id && $domain_selected && $domain_tlds){
+                    $emyui_api  = emyui_api::instance();
+                    $name       = self::emyui_sanitize_domain_name($domainsearch).$domain_tlds;
+                    $data       = $emyui_api->emyui_get_domain_whois_data($name);
+                    if(isset($data['error']) && !empty($data['error'])){
+                        if(class_exists('WC_Cart') && WC()->cart){
+                            if(WC()->cart->get_cart_contents_count() > 0 ){
+                                WC()->cart->empty_cart();
+                            }
+                            WC()->cart->add_to_cart( $package_id, 1, '', '', array(
+                                    'domain_name' => $name
+                                ) 
+                            );
+                            $cart_url = wc_get_cart_url();
+                            wp_send_json_success(
+                                array(
+                                    'success'  => true,
+                                    'cart_url' => $cart_url,
+                                )
+                            );
+                            exit();
+                        }
                     }
-                    exit();
                 }
             }
         }
-        wp_send_json_error();
+        wp_send_json_error(
+            array(
+                'success'   => false,
+                'msg'       => __('Already Purchased, Try another domain name', 'emyui')
+            )
+        );
         exit();
+    }
+
+    /**
+     * 01-12-2025
+     * 
+     * Remove invalid characters (anything other than a-z, 0-9, and hyphens)
+     **/
+    public static function emyui_sanitize_domain_name($string) {
+        $sanitized = preg_replace('/[^a-zA-Z0-9-]/', '', $string);
+        $sanitized = preg_replace('/-+/', '-', $sanitized);
+        $sanitized = trim($sanitized, '-');
+        return strtolower($sanitized);
+    }
+
+    /**
+     * 01-12-2025
+     * 
+     * Function to check if the package is valid.
+     **/
+    public static function emyui_is_valid_package($package_id) {
+        $valid_package = get_post($package_id);
+        return ($valid_package && $valid_package->post_status === 'publish');
+    }
+
+    /**
+     * 01-12-2025
+     * 
+     * show Domain name in cart
+     */
+    public static function emyui_get_item_data( $data, $cart_item ) {
+        if ( isset( $cart_item['domain_name'] ) ) {
+            $data[] = array(
+                'name'  => __( 'Domain Name', 'emyui' ),
+                'value' => $cart_item['domain_name']
+            );
+        }
+        return $data;
+    }
+
+    /**
+     * 01-12-2025
+     * 
+     * order_item_meta function for storing the meta in the order line items
+     */
+    public static function emyui_order_line_item( $item, $cart_item_key, $values, $order ) {
+        if ( isset( $cart_item['domain_name'] ) ) {
+            $item->update_meta_data( __( 'Domain Name', 'emyui' ), $cart_item['domain_name'] );
+        }
+    }
+
+    /**
+     * 01-12-2025
+     * 
+     * Check cart contain package.
+     */
+    public static function emyui_check_cart_has_package() {
+        if ( !is_admin() ) {
+            $cart_items = WC()->cart->get_cart();
+            if ( !empty( $cart_items ) ) {
+                foreach ( $cart_items as $cart_item_key => $cart_item ) {
+                    $_product = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
+                    if ( $_product->is_type( 'package' ) ) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 01-12-2025
+     * 
+     * Remove underscores and replace them with spaces
+     **/
+    public static function emyui_modify_product_titles($name, $product) {
+        $name = str_replace('_', ' ', $name);
+        return ucwords($name);
+    }
+
+    /**
+     * 01-12-2025
+     * 
+     * Disable quantity
+     **/
+    public static function emyui_remove_all_quantity_fields( $return, $product ) {
+        return true;
     }
 }
 EMYUI_Package_Product::init();

@@ -142,7 +142,7 @@ class emyui_api{
       }
       public function emyui_get_domain_whois_data1(){
         if(isset($_GET['test']) && $_GET['test'] == 1){
-            $data = $this->emyui_get_domain_whois_data('techdata.co.in');
+            $data = $this->emyui_get_domain_whois_data('vlabhosting.com');
             echo '<pre>';
             print_r($data);
             die();

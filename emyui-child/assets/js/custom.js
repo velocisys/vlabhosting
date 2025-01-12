@@ -1,15 +1,13 @@
 jQuery(document).on('submit', 'form.domain-header-search-form', function(event){
 	event.preventDefault();
-    var self   = jQuery(this);
-	var domain = jQuery('.inputdomainsearch');
+    var self            = jQuery(this);
+	var domain          = jQuery('.inputdomainsearch');
+    var domain_tlds     = jQuery('select[name="emyui_domain_tlds"]');
+    var domain_selected = jQuery('input[name="emyui_domain"]:checked');
     domain.attr('readonly', 'readonly');
     self.find('.search-btn').attr('disabled', 'disabled');
     self.find('.spinner-border').show();
 	domain.next('span.error').remove();
-    jQuery('input[name="package_id"]').val('');
-    jQuery('input[name="package_step"]').val('');
-    jQuery('input[name="package_domain"]').val('');
-    jQuery('input[name="package_domain_id"]').val('');
 	if(domain.val() == ''){
 		domain.after('<span class="error">'+load_emyui.required+'</span>');
         domain.removeAttr('readonly', 'readonly');
@@ -22,17 +20,18 @@ jQuery(document).on('submit', 'form.domain-header-search-form', function(event){
         type: 'POST',
         data: {
             action: 'emyui_domain_search',
-            'domainsearch': domain.val()
+            'domainsearch':     domain.val(),
+            'domain_selected':  domain_selected.val(),
+            'domain_tlds' :     domain_tlds.val(),
         },
         success: function(response) {
             if(response && response.success == true){
-                jQuery('input[name="package_id"]').val(response.data.package_id);
-                jQuery('input[name="package_step"]').val(response.data.package_step);
-                jQuery('input[name="package_domain"]').val(response.data.package_domain);
-                jQuery('input[name="package_domain_id"]').val(response.data.package_domain_id);
                 self.find('.search-btn').removeAttr('disabled');
                 domain.removeAttr('readonly', 'readonly');
                 self.find('.spinner-border').hide();
+                if(response && response.data.cart_url){
+                    window.location.href = response.data.cart_url;
+                }
             }else{
                 if(response && response.data.msg){
                     domain.after('<span class="error">'+response.data.msg+'</span>');
