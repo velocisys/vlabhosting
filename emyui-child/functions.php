@@ -23,6 +23,16 @@ function emyui_child_enqueue_styles() {
         'required' => __('This field is required.', 'emyui')
     ]);
 }
+function emyui_child_enqueue_admin_scripts() {
+    global $pagenow;
+    if($pagenow == 'post.php' && isset($_GET['post']) && get_post_type($_GET['post']) == 'product') {
+        wp_enqueue_script('jquery');
+        wp_enqueue_script('custom-admin-js', EMUI_JS . '/admin.js?time='.time(), array('jquery'), '1.0', true);
+        wp_enqueue_style('custom-admin-style', EMUI_CSS . '/admin.css?time='.time());
+    }
+}
+add_action('admin_enqueue_scripts', 'emyui_child_enqueue_admin_scripts');
+
 require_once(EMUI_CLASSES.'/emyui-main.php');
 require_once(EMUI_CLASSES.'/emyui-api.php');
 require_once(EMUI_CLASSES.'/emyui-package.php');

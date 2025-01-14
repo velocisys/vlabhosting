@@ -58,6 +58,7 @@ class EMYUI_Package_Product {
         add_filter( 'woocommerce_get_item_data', array( __CLASS__, 'emyui_get_item_data' ), 10, 2 );
         add_filter('woocommerce_product_get_name', array( __CLASS__,'emyui_modify_product_titles'), 10, 2);
         add_filter( 'woocommerce_is_sold_individually', array( __CLASS__,'emyui_remove_all_quantity_fields'), 10, 2 );
+        add_action( 'woocommerce_product_options_general_product_data', array(__CLASS__,'emyui_add_custom_plans_field'));
         self::$initialized = true;
     }
 
@@ -113,6 +114,20 @@ class EMYUI_Package_Product {
         }
         echo '<div id="package_options_data" class="panel woocommerce_options_panel">';
             echo '<div class="options_group">';
+                woocommerce_wp_select( array(
+                    'id'            => '_package_hosting_plan',
+                    'label'         => __( 'Hosting Plan', 'emyui' ),
+                    'description'   => __( 'Choose an option from the dropdown.', 'emyui' ),
+                    'desc_tip'      => true,
+                    'options'       => array(
+                        ''               => __( 'Choose once', 'emyui' ),
+                        'shared_hosting' => __( 'Shared Hosting', 'emyui' ),
+                        'vps'            => __( 'VPS', 'emyui' ),
+                        'cloud'          => __( 'Cloud', 'emyui' ),
+                        'wp'             => __( 'WordPress', 'emyui' ),
+                        'gps'            => __( 'Gps', 'emyui' ),
+                    )
+                ) );
                 woocommerce_wp_text_input([
                     'id'          => '_package_quota',
                     'label'       => __('Package Quota', 'emyui'),
@@ -197,20 +212,6 @@ class EMYUI_Package_Product {
                     'type'        => 'number',
                     'desc_tip'    => true,
                 ]);
-                woocommerce_wp_select( array(
-                    'id'            => '_package_hosting_plan',
-                    'label'         => __( 'Hosting Plan', 'emyui' ),
-                    'description'   => __( 'Choose an option from the dropdown.', 'emyui' ),
-                    'desc_tip'      => true,
-                    'options'       => array(
-                        ''               => __( 'Choose once', 'emyui' ),
-                        'shared_hosting' => __( 'Shared Hosting', 'emyui' ),
-                        'vps'            => __( 'VPS', 'emyui' ),
-                        'cloud'          => __( 'Cloud', 'emyui' ),
-                        'wp'             => __( 'WordPress', 'emyui' ),
-                        'gps'            => __( 'Gps', 'emyui' ),
-                    )
-                ) );
             echo '</div>';
         echo '</div>';
     }
@@ -235,12 +236,33 @@ class EMYUI_Package_Product {
             '_package_maxpark',
             '_package_maxsub',
             '_package_max_team_users',
-            '_package_hosting_plan'
+            '_package_hosting_plan',
+            '_featured_package_text',
+            '_package_offer_text'
         ];
         foreach ($fields as $field) {
             if (isset($_POST[$field])) {
                 update_post_meta($post_id, $field, sanitize_text_field($_POST[$field]));
             }
+        }
+        if(isset($_POST['_hosting_plan']) && is_array($_POST['_hosting_plan'])){
+            $hosting_plans = array_filter($_POST['_hosting_plan'], function($plan){
+                return !empty($plan['plan_name']) || !empty($plan['plan_price']) || !empty($plan['plan_offer']);
+            });
+            if(!empty($hosting_plans)){
+                $sanitized_plans = array_map(function($plan) {
+                    return [
+                        'plan_name'     => sanitize_text_field($plan['plan_name']),
+                        'plan_price'    => sanitize_text_field($plan['plan_price']),
+                        'plan_offer'    => sanitize_textarea_field($plan['plan_offer']),
+                    ];
+                }, $hosting_plans);
+                update_post_meta($post_id, '_hosting_plan_meta', json_encode($sanitized_plans));
+            }else{
+                delete_post_meta($post_id, '_hosting_plan_meta');
+            }
+        }else{
+            delete_post_meta($post_id, '_hosting_plan_meta');
         }
     }
 
@@ -525,6 +547,67 @@ class EMYUI_Package_Product {
      **/
     public static function emyui_remove_all_quantity_fields( $return, $product ) {
         return true;
+    }
+
+    /**
+     * 01-14-2025
+     * 
+     * Add custom fields to the Advanced tab in WooCommerce settings.
+     **/
+    public static function emyui_add_custom_plans_field() {
+        woocommerce_wp_textarea_input( array(
+            'id'            => '_featured_package_text',
+            'label'         => __( 'Package Overview', 'woocommerce' ),
+            'placeholder'   => __( 'Provide a concise description of the featured package', 'woocommerce' ),
+            'desc_tip'      => true,
+            'description'   => __( 'Enter a brief and professional description highlighting the key benefits and features of the package.', 'woocommerce' ),
+        ));
+        woocommerce_wp_text_input( array(
+            'id'            => '_package_offer_text',
+            'label'         => __( 'Package Offer', 'woocommerce' ),
+            'placeholder'   => __( 'Package Offer', 'woocommerce' ),
+            'desc_tip'      => true,
+            'description'   => __( 'Package offer.', 'woocommerce' ),
+        ));
+        $package_id     = isset($_GET['post']) ? sanitize_text_field($_GET['post']) : '';
+        $package_group  = get_post_meta($package_id, '_hosting_plan_meta', true);
+        if(!empty($package_group)){
+            $plan_meta = json_decode($package_group, true);
+            require_once(EMUI_VIEWS.'/package-custom-general-tab.php');
+        }else{
+            echo sprintf('<div class="emyui-hosting-plan-main" data-id="0">');
+                woocommerce_wp_text_input(array(
+                    'id'            => '_hosting_plan_name_0',
+                    'name'          => '_hosting_plan[0][plan_name]',
+                    'label'         => __('Hosting Plan Name', 'woocommerce'),
+                    'placeholder'   => 'Enter hosting plan name',
+                    'desc_tip'      => false,
+                    'description'   => __('Enter the name for the hosting plan.', 'woocommerce'),
+                    'type'          => 'text'
+                ));
+                woocommerce_wp_text_input(array(
+                    'id'            => '_hosting_plan_price_0',
+                    'name'          => '_hosting_plan[0][plan_price]',
+                    'label'         => __('Hosting Plan Price', 'woocommerce'),
+                    'placeholder'   => 'Enter hosting plan price',
+                    'desc_tip'      => false,
+                    'description'   => __('Enter the price for the hosting plan.', 'woocommerce'),
+                    'type'          => 'text'
+                ));
+                woocommerce_wp_textarea_input(array(
+                    'id'            => '_hosting_plan_offer_text_0',
+                    'name'          => '_hosting_plan[0][plan_offer]',
+                    'label'         => __('Offer Text', 'woocommerce'),
+                    'placeholder'   => 'Enter offer text',
+                    'desc_tip'      => false,
+                    'description'   => __('Enter the offer text for this hosting plan.', 'woocommerce'),
+                    'type'          => 'textarea'
+                ));
+            echo sprintf('</div>');
+        }
+        echo '<div id="hosting-plan-repeater">';
+        echo sprintf('<button type="button" id="add-new-hosting-plan" class="button">%s</button>', __('Add New Hosting Plan', 'emyui'));
+        echo '</div>';
     }
 }
 EMYUI_Package_Product::init();

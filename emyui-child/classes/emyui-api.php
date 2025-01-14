@@ -68,7 +68,7 @@ class emyui_api{
           $product = wc_get_product($existing_product_id);
           if($product){
             $product->set_name( $package['name'] );
-            $product->set_regular_price( $package['price'] ?? '0' );
+            //$product->set_regular_price( $package['price'] ?? '0' );
             $product->set_description( $package['description'] ?? '' );
             $product->save();
             wp_set_object_terms($existing_product_id, 'package', 'product_type');
@@ -79,7 +79,7 @@ class emyui_api{
           $product = new WC_Product_Simple();
           $product->set_name( $package['name'] );
           $product->set_sku( $package['name'] );
-          $product->set_regular_price( $package['price'] ?? '0' );
+          //$product->set_regular_price( $package['price'] ?? '0' );
           $product->set_description( $package['description'] ?? '' );
           $product_id = $product->save();
           wp_set_object_terms($product_id, 'package', 'product_type');
