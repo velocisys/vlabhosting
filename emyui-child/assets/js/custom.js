@@ -8,6 +8,7 @@ jQuery(document).on('submit', 'form.domain-header-search-form', function(event){
     self.find('.search-btn').attr('disabled', 'disabled');
     self.find('.spinner-border').show();
 	domain.next('span.error').remove();
+    self.find('.emyui-suggest-domain').remove();
 	if(domain.val() == ''){
 		domain.after('<span class="error">'+load_emyui.required+'</span>');
         domain.removeAttr('readonly', 'readonly');
@@ -19,7 +20,7 @@ jQuery(document).on('submit', 'form.domain-header-search-form', function(event){
         url: load_emyui.ajax_url,
         type: 'POST',
         data: {
-            action: 'emyui_domain_search',
+            action:             'emyui_domain_search',
             'domainsearch':     domain.val(),
             'domain_selected':  domain_selected.val(),
             'domain_tlds' :     domain_tlds.val(),
@@ -33,12 +34,13 @@ jQuery(document).on('submit', 'form.domain-header-search-form', function(event){
                     window.location.href = response.data.cart_url;
                 }
             }else{
-                if(response && response.data.msg){
-                    domain.after('<span class="error">'+response.data.msg+'</span>');
-                    domain.removeAttr('readonly', 'readonly');
-                    self.find('.search-btn').removeAttr('disabled');
-                    self.find('.spinner-border').hide();
+                if(response && response.data.msg && response.data.domain_tdls){
+                    domain.after(response.data.msg);
+                    self.find('.search-btn').parent('.single-input').before(response.data.domain_tdls)
                 }
+                domain.removeAttr('readonly', 'readonly');
+                self.find('.search-btn').removeAttr('disabled');
+                self.find('.spinner-border').hide();
             }
         },
         error: function(xhr, status, error) {

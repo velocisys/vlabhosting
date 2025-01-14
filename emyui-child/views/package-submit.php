@@ -26,9 +26,16 @@
                     </div>
                     <div class="single-input w-100 w-sm-50 w-lg-35 py-4 col-md-2 pr-lg-0">
                         <select name="emyui_domain_tlds">
-                            <option value=".com"><?php _e('.com', 'emyui'); ?></option>
-                            <option value=".net"><?php _e('.net', 'emyui'); ?></option>
-                            <option value=".org"><?php _e('.org', 'emyui'); ?></option>
+                            <?php
+                                $domains = emyui_domain();
+                                if(is_array($domains) && !empty($domains)){
+                                    foreach ($domains as $key => $domain) {
+                                        ?>
+                                            <option value="<?php echo $key; ?>"><?php _e($domain, 'emyui'); ?></option>
+                                        <?php
+                                    }
+                                } 
+                            ?>
                         </select>
                     </div>
                     <div class="single-input w-100 w-lg-30 d-flex align-items-center justify-content-center border-0 pb-4 pt-lg-4 pt-0 pl-lg-0 col-md-4">

@@ -37,3 +37,22 @@ require_once(EMUI_CLASSES.'/emyui-main.php');
 require_once(EMUI_CLASSES.'/emyui-api.php');
 require_once(EMUI_CLASSES.'/emyui-package.php');
 
+/**
+ * 01-15-2025
+ * 
+ * Domains Arrays
+ **/
+function emyui_domain($exclude = ''){
+    $domains = [
+        '.com'  => 'com',
+        '.net'  => 'net',
+        '.nl'   => 'nl',
+        '.org'  => 'org',
+        '.us'   => 'us',
+    ];
+    if ($exclude && array_key_exists($exclude, $domains)) {
+        unset($domains[$exclude]);
+    }
+    return $domains;
+}
+

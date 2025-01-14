@@ -405,8 +405,9 @@ class EMYUI_Package_Product {
      * Domain search
      **/
     public static function emyui_domain_search(){
+        $domainsearch = isset($_POST['domainsearch']) ? sanitize_text_field($_POST['domainsearch']) : '';
+        $domain_tlds  = isset($_POST['domain_tlds'])?sanitize_text_field($_POST['domain_tlds']):'';
         if(isset($_POST['action']) && $_POST['action'] == 'emyui_domain_search'){
-            $domainsearch = isset($_POST['domainsearch']) ? sanitize_text_field($_POST['domainsearch']) : '';
             if(empty($domainsearch)){
                 wp_send_json_error(
                     array(
@@ -417,7 +418,6 @@ class EMYUI_Package_Product {
                 exit();
             }else{
                 $domain_selected    = isset($_POST['domain_selected'])?sanitize_text_field($_POST['domain_selected']):'';
-                $domain_tlds        = isset($_POST['domain_tlds'])?sanitize_text_field($_POST['domain_tlds']):'';
                 $package_id         = isset($_COOKIE['package_id'])?sanitize_text_field($_COOKIE['package_id']):'';
                 if(!$package_id || !self::emyui_is_valid_package($package_id)){
                     wp_send_json_error(
@@ -454,10 +454,15 @@ class EMYUI_Package_Product {
                 }
             }
         }
+        $error = sprintf('<span class="error">%s</span>',__('Already Purchased, Try another domain name', 'emyui'));
+        ob_start();
+            require_once(EMUI_VIEWS.'/domain-tdls.php');
+        $domain_tlds = ob_get_clean();
         wp_send_json_error(
             array(
-                'success'   => false,
-                'msg'       => __('Already Purchased, Try another domain name', 'emyui')
+                'success'       => false,
+                'msg'           => $error,
+                'domain_tdls'   => $domain_tlds
             )
         );
         exit();
