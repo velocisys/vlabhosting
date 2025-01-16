@@ -1,3 +1,8 @@
+/**
+ * 01-01-2025
+ * 
+ * Search Domain
+ **/
 jQuery(document).on('submit', 'form.domain-header-search-form', function(event){
 	event.preventDefault();
     var self            = jQuery(this);
@@ -47,4 +52,18 @@ jQuery(document).on('submit', 'form.domain-header-search-form', function(event){
             console.log(xhr.responseText);
         }
     });
+});
+
+/**
+ * 01-17-2025
+ * 
+ * Available domain change TDLS
+ **/
+jQuery(document).on('click', 'input[name="domain_suggest_radio"]', function(){
+    var selectedTLD = jQuery(this).attr('data-tdls');
+    if(selectedTLD){
+        jQuery("select[name='emyui_domain_tlds']").val("");
+        jQuery("select[name='emyui_domain_tlds']").val(selectedTLD);
+        jQuery("select[name='emyui_domain_tlds']").niceSelect('update');
+    }
 });

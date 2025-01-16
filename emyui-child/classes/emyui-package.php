@@ -442,6 +442,8 @@ class EMYUI_Package_Product {
                                 ) 
                             );
                             $cart_url = wc_get_cart_url();
+                            $emyui_main = emyui_main::instance();
+                            $emyui_main->emyui_set_woocommerce_notice_transient('woocommerce_notice_cart','Your cart has been updated.','notice',60);
                             wp_send_json_success(
                                 array(
                                     'success'  => true,
@@ -513,25 +515,6 @@ class EMYUI_Package_Product {
     public static function emyui_order_line_item( $item, $cart_item_key, $values, $order ) {
         if ( isset( $cart_item['domain_name'] ) ) {
             $item->update_meta_data( __( 'Domain Name', 'emyui' ), $cart_item['domain_name'] );
-        }
-    }
-
-    /**
-     * 01-12-2025
-     * 
-     * Check cart contain package.
-     */
-    public static function emyui_check_cart_has_package() {
-        if ( !is_admin() ) {
-            $cart_items = WC()->cart->get_cart();
-            if ( !empty( $cart_items ) ) {
-                foreach ( $cart_items as $cart_item_key => $cart_item ) {
-                    $_product = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
-                    if ( $_product->is_type( 'package' ) ) {
-                        return true;
-                    }
-                }
-            }
         }
     }
 
