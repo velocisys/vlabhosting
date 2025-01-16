@@ -59,6 +59,7 @@ class EMYUI_Package_Product {
         add_filter('woocommerce_product_get_name', array( __CLASS__,'emyui_modify_product_titles'), 10, 2);
         add_filter( 'woocommerce_is_sold_individually', array( __CLASS__,'emyui_remove_all_quantity_fields'), 10, 2 );
         add_action( 'woocommerce_product_options_general_product_data', array(__CLASS__,'emyui_add_custom_plans_field'));
+        add_filter( 'woocommerce_return_to_shop_text', array(__CLASS__, 'emyui_woocommerce_return_to_shop_text'));
         self::$initialized = true;
     }
 
@@ -596,6 +597,16 @@ class EMYUI_Package_Product {
         echo '<div id="hosting-plan-repeater">';
         echo sprintf('<button type="button" id="add-new-hosting-plan" class="button">%s</button>', __('Add New Hosting Plan', 'emyui'));
         echo '</div>';
+    }
+
+    /**
+     * 01-17-2025
+     * 
+     * Cart empty button text changed.
+     **/
+    public static function emyui_woocommerce_return_to_shop_text($text){
+        $text = __( 'Return to package', 'woocommerce' );
+        return $text;
     }
 }
 EMYUI_Package_Product::init();
