@@ -60,6 +60,8 @@ class EMYUI_Package_Product {
         add_filter( 'woocommerce_is_sold_individually', array( __CLASS__,'emyui_remove_all_quantity_fields'), 10, 2 );
         add_action( 'woocommerce_product_options_general_product_data', array(__CLASS__,'emyui_add_custom_plans_field'));
         add_filter( 'woocommerce_return_to_shop_text', array(__CLASS__, 'emyui_woocommerce_return_to_shop_text'));
+        add_action( 'wp_ajax_emyui_package', array(__CLASS__, 'emyui_package' ));
+        add_action( 'wp_ajax_nopriv_emyui_package', array(__CLASS__, 'emyui_package' ));
         self::$initialized = true;
     }
 
@@ -248,7 +250,7 @@ class EMYUI_Package_Product {
         }
         if(isset($_POST['_hosting_plan']) && is_array($_POST['_hosting_plan'])){
             $hosting_plans = array_filter($_POST['_hosting_plan'], function($plan){
-                return !empty($plan['plan_name']) || !empty($plan['plan_price']) || !empty($plan['plan_offer']);
+                return !empty($plan['plan_name']) || !empty($plan['plan_price']) || !empty($plan['plan_offer']) || !empty($plan['plan_default']);
             });
             if(!empty($hosting_plans)){
                 $sanitized_plans = array_map(function($plan) {
@@ -256,6 +258,7 @@ class EMYUI_Package_Product {
                         'plan_name'     => sanitize_text_field($plan['plan_name']),
                         'plan_price'    => sanitize_text_field($plan['plan_price']),
                         'plan_offer'    => sanitize_textarea_field($plan['plan_offer']),
+                        'plan_default'  => sanitize_textarea_field($plan['plan_default']),
                     ];
                 }, $hosting_plans);
                 update_post_meta($post_id, '_hosting_plan_meta', json_encode($sanitized_plans));
@@ -444,7 +447,7 @@ class EMYUI_Package_Product {
                             );
                             $cart_url = wc_get_cart_url();
                             $emyui_main = emyui_main::instance();
-                            $emyui_main->emyui_set_woocommerce_notice_transient('woocommerce_notice_cart','Your cart has been updated.','notice',60);
+                            $emyui_main->emyui_set_woocommerce_notice_transient('woocommerce_notice_cart','Your package has been added.','notice',60);
                             wp_send_json_success(
                                 array(
                                     'success'  => true,
@@ -565,6 +568,15 @@ class EMYUI_Package_Product {
             require_once(EMUI_VIEWS.'/package-custom-general-tab.php');
         }else{
             echo sprintf('<div class="emyui-hosting-plan-main" data-id="0">');
+                woocommerce_wp_checkbox(array(
+                    'id'            => '_hosting_plan_defaul_0',
+                    'name'          => '_hosting_plan[0][plan_default]',
+                    'label'         => __('Hosting Plan Default', 'woocommerce'),
+                    'desc_tip'      => false,
+                    'description'   => __('Mark this as the default hosting plan', 'woocommerce'),
+                    'value'         => 'yes',
+                    'class'         => 'checkbox'
+                ));
                 woocommerce_wp_text_input(array(
                     'id'            => '_hosting_plan_name_0',
                     'name'          => '_hosting_plan[0][plan_name]',
@@ -607,6 +619,45 @@ class EMYUI_Package_Product {
     public static function emyui_woocommerce_return_to_shop_text($text){
         $text = __( 'Return to package', 'woocommerce' );
         return $text;
+    }
+
+    /**
+     * 01-19-2025
+     * 
+     * Changes packages
+     **/
+    public static function emyui_package(){
+        if(isset($_POST['action']) && $_POST['action'] == 'emyui_package'){
+            $package_id = isset($_POST['package']) ? sanitize_text_field($_POST['package']) : '';
+            if($package_id && !WC()->cart->is_empty()){
+                $cart = WC()->cart;
+                if($cart){
+                    foreach($cart->get_cart() as $cart_item_key => $cart_item ) {
+                        $cart->remove_cart_item($cart_item_key);
+                        $existing_domain_name = isset($cart_item['domain_name']) ? $cart_item['domain_name'] : '';
+                        if($existing_domain_name){
+                            $cart->add_to_cart($package_id, 1, '', '', array(
+                                'domain_name' => $existing_domain_name
+                            ));
+                        }else{
+                            $cart->add_to_cart($package_id, 1);
+                        }
+                        WC()->cart->calculate_totals();
+                        $emyui_main = emyui_main::instance();
+                        $emyui_main->emyui_set_woocommerce_notice_transient('woocommerce_notice_cart','Your package has been updated.','notice',60);
+                        wp_send_json_success(
+                            array(
+                                'success' => true,
+                                'msg'     => __('Package successfully update.', 'emyui')
+                            )
+                        );
+                        exit();
+                    }
+                }
+            }
+        }
+        wp_send_json_error();
+        exit();
     }
 }
 EMYUI_Package_Product::init();

@@ -84,6 +84,10 @@ class emyui_main{
       wp_safe_redirect(home_url());
       exit;
     }
+    if(WC()->cart->is_empty()){
+      setcookie("plan_price", "", time()-(60*60*24*7),"/");
+      setcookie("plan_offer", "", time()-(60*60*24*7),"/");
+    }
   }
 
   /**
@@ -120,5 +124,54 @@ class emyui_main{
           }
       }
   }
+
+  /**
+   * 10-16-2024
+   * 
+   * Package in dropdown
+   **/
+  public  function emyui_get_package_dropdown($product_id, $hosting_plan) {
+      $product = wc_get_product($product_id);
+      $dropdown_html = '';
+      $args = array(
+        'post_status'    => 'publish',
+        'order'          => 'DESC',
+        'orderby'        => 'menu_order',
+        'posts_per_page' => -1,
+        'meta_query'     => array(
+          array(
+            'key'     => '_package_hosting_plan',
+            'compare' => $hosting_plan
+          ),
+        )
+      );
+      if($product && $product->is_type('package')){
+        $args['tax_query'][] = array(
+          'taxonomy' => 'product_type',
+          'field'    => 'slug',
+          'terms'    => 'package',
+        );
+      }
+      $query = new WP_Query( $args );
+      if ( $query->have_posts() ) {
+        $dropdown_html  = '<div class="emyui_package_wrap"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display:none;"></span><span class="sr-only">Loading...</span>';
+        $dropdown_html .= sprintf('<select name="emyui_package" class="emyui_package" id="emyui_package">');
+        while ( $query->have_posts() ) {
+          $query->the_post();
+          $current_product_id = get_the_ID();
+          $product = wc_get_product($current_product_id);
+          if($product){
+            $product_price = $product->get_price();
+            $selected = ($current_product_id == $product_id) ? 'selected' : '';
+            $producttitle  = str_replace('Select Package', '', preg_replace("/-/", "", trim($product->get_title()))); 
+            $dropdown_html .= sprintf('<option value="%d" %s>%s</option>', $current_product_id, $selected, $producttitle);
+          }
+        }
+        wp_reset_postdata();
+        $dropdown_html .= '</select>';
+        $dropdown_html .= '</div>';
+      }
+      return $dropdown_html;
+    }
 }
 emyui_main::instance();

@@ -67,3 +67,105 @@ jQuery(document).on('click', 'input[name="domain_suggest_radio"]', function(){
         jQuery("select[name='emyui_domain_tlds']").niceSelect('update');
     }
 });
+
+jQuery(document).ready(function($) {
+
+    /**
+     * 01-19-2025
+     * 
+     * Hosting Deal
+     **/
+    jQuery('select[name="emyui_hosting_deal"]').on('change', function(){
+        var selectedOption  = $(this).find('option:selected');
+        var planPrice       = selectedOption.data('plan_price');
+        var planOffer       = selectedOption.data('plan-offer');
+        var index_id        = selectedOption.data('index_id');
+        var package         = jQuery('select[name="emyui_package"]').val();
+        if(planPrice){
+            jQuery('#selected-plan-price').html(planPrice);
+            emyui_set_cookie('plan_price', selectedOption.val(), 1);
+        }else{
+            jQuery('#selected-plan-price').html('');
+            emyui_delete_cookie('plan_price');
+        }
+        if(planOffer){
+            jQuery('#selected-plan-offer').text(planOffer);
+            emyui_set_cookie('plan_offer', planOffer, 1);
+        }else{
+            jQuery('#selected-plan-offer').text('');
+            emyui_delete_cookie('plan_offer');
+        }
+    });
+
+    /**
+     * 01-09-2025
+     * 
+     * Change packages
+     **/
+    jQuery('select[name="emyui_package"]').on('change', function(){
+        var self    = jQuery(this);
+        var package = self.val();
+        self.attr('disabled', 'disabled');
+        self.parent('.emyui_package_wrap').find('.spinner-border').show();
+        jQuery.ajax({
+            url: load_emyui.ajax_url,
+            type: 'POST',
+            data: {
+                action:     'emyui_package',
+                'package':  package,
+            },
+            success: function(response) {
+                if(response && response.success == true){
+                    self.removeAttr('disabled');
+                }else{
+                    self.removeAttr('disabled');
+                }
+                location.reload();
+            },
+            error: function(xhr, status, error) {
+                console.log(xhr.responseText);
+            }
+        });
+    });
+});
+
+/**
+ * 01-19-2025
+ * 
+ * Create a cookie
+ **/
+function emyui_set_cookie(name, value, days) {
+    var expires = "";
+    if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "") + expires + "; path=/";
+}
+
+/**
+ * 01-19-2025
+ * 
+ * Get a cookie value
+ **/
+function emyui_get_cookie(name) {
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+    for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+    }
+    return '';
+}
+
+/**
+ * 01-19-2025
+ * 
+ * Delete a cookie
+ **/
+function emyui_delete_cookie(name) {
+    document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
+}
+
