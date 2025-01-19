@@ -13,6 +13,7 @@ jQuery(document).on('submit', 'form.domain-header-search-form', function(event){
     self.find('.search-btn').attr('disabled', 'disabled');
     self.find('.spinner-border').show();
     self.find('.emyui-suggest-domain').remove();
+    self.find('.error').remove();
 	if(domain.val() == ''){
 		domain.after('<span class="error">'+load_emyui.required+'</span>');
         domain.removeAttr('readonly', 'readonly');
@@ -127,6 +128,23 @@ jQuery(document).ready(function($) {
             }
         });
     });
+
+    /**
+     * 01-19-2025
+     * 
+     * Domain radio button
+     **/
+    /*jQuery(document).on('change', 'input[name="emyui_domain"]', function(){
+        var self = jQuery(this);
+        self.parents('form.domain-header-search-form').find('.error').remove();
+        if(self.val() == 'new'){
+            self.parents('form.domain-header-search-form').find('.emyui-domain-tdls').show();
+            self.parents('form.domain-header-search-form').find('.emyui-domain-tdls select[name="emyui_domain_tlds"]').removeAttr('disabled');
+        }else{
+            self.parents('form.domain-header-search-form').find('.emyui-domain-tdls').hide();
+            self.parents('form.domain-header-search-form').find('.emyui-domain-tdls select[name="emyui_domain_tlds"]').attr('disabled', 'disabled');
+        }
+    });*/
 });
 
 /**

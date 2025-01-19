@@ -112,16 +112,13 @@ do_action( 'woocommerce_before_cart' ); ?>
 								$cookies_price 	= isset($_COOKIE['plan_price']) ? sanitize_text_field($_COOKIE['plan_price']) : '';
 								if(!empty($cookies_price)){
 									$cookies_offer 	= isset($_COOKIE['plan_offer']) ? sanitize_text_field($_COOKIE['plan_offer']) : '';
+									$default_plan_price = wc_price($cookies_price);
+									$default_plan_offer = $cookies_offer;
 								}else{
 									$default_plan = array_filter($plan_meta, function($plan) {
 										return $plan['plan_default'] === 'yes';
 									});
 									$default_plan 	= array_values($default_plan);
-								}
-								if($cookies_price){
-									$default_plan_price = wc_price($cookies_price);
-									$default_plan_offer = $cookies_offer;
-								}else{
 									$default_plan_price = isset($default_plan[0]['plan_price']) ? wc_price(sanitize_text_field($default_plan[0]['plan_price'])) : '';
 									$default_plan_offer = isset($default_plan[0]['plan_offer']) ? sanitize_text_field($default_plan[0]['plan_offer']) : '';
 								}
@@ -139,7 +136,7 @@ do_action( 'woocommerce_before_cart' ); ?>
 		    									if($plan_price == $cookies_price){
 		    										$selected = 'selected';
 		    									}
-		    									if($plan_default == 'yes' && !empty($selected)){
+		    									if($plan_default == 'yes' && empty($cookies_price)){
 		    										$selected = 'selected';
 		    									}
 		    									?>

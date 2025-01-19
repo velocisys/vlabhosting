@@ -11,7 +11,7 @@
                     <span class="typed-cursor" aria-hidden="true">|</span></h1>
                 <p data-i18n="[html]genaral.homapgesubtitle" class="coodiv-text-9 px-7 mb-0 coodiv-color-white-opacity-7 mb-10"></p>
                 <form class="domain-header-search-form d-flex flex-wrap bg-white" action="" method="post">
-                    <div class="single-input w-100 w-sm-50 w-lg-35 py-4 col-md-8 pr-lg-0">
+                    <div class="single-input w-100 w-sm-50 w-lg-35 py-4 col-md-8 pr-lg-0 emyui-domain-choose">
                         <label class="emyui-label">
                             <input type="radio" name="emyui_domain" class="emyui-domain" checked="checked" value="new">
                             <?php _e('New Domain', 'emyui'); ?>
@@ -21,10 +21,10 @@
                             <?php _e('Existing Domain', 'emyui'); ?>
                         </label>
                     </div>
-                    <div class="single-input w-100 w-sm-50 w-lg-35 py-4 col-md-8 pr-lg-0">
+                    <div class="single-input w-100 w-sm-50 w-lg-35 py-4 col-md-8 pr-lg-0 emyui-domain-search">
                         <input type="text" class="inputdomainsearch" placeholder="eg. example.com" autocapitalize="none" name="query" size="20">
                     </div>
-                    <div class="single-input w-100 w-sm-50 w-lg-35 py-4 col-md-2 pr-lg-0">
+                    <div class="single-input w-100 w-sm-50 w-lg-35 py-4 col-md-2 pr-lg-0 emyui-domain-tdls">
                         <select name="emyui_domain_tlds">
                             <?php
                                 $domains = emyui_domain();

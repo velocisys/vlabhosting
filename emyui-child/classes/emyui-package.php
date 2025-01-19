@@ -411,6 +411,8 @@ class EMYUI_Package_Product {
     public static function emyui_domain_search(){
         $domainsearch = isset($_POST['domainsearch']) ? sanitize_text_field($_POST['domainsearch']) : '';
         $domain_tlds  = isset($_POST['domain_tlds'])?sanitize_text_field($_POST['domain_tlds']):'';
+        setcookie("plan_price", "", time()-(60*60*24*7),"/");
+        setcookie("plan_offer", "", time()-(60*60*24*7),"/");
         if(isset($_POST['action']) && $_POST['action'] == 'emyui_domain_search'){
             if(empty($domainsearch)){
                 wp_send_json_error(
@@ -432,11 +434,11 @@ class EMYUI_Package_Product {
                     );
                     exit();
                 }
-                if($package_id && $domain_selected && $domain_tlds){
+                if($package_id){
                     $emyui_api  = emyui_api::instance();
                     $name       = self::emyui_sanitize_domain_name($domainsearch).$domain_tlds;
                     $data       = $emyui_api->emyui_get_domain_whois_data($name);
-                    if(isset($data['error']) && !empty($data['error'])){
+                    if(isset($data['error']) && !empty($data['error']) && $domain_selected == 'new' && $domain_tlds){
                         if(class_exists('WC_Cart') && WC()->cart){
                             if(WC()->cart->get_cart_contents_count() > 0 ){
                                 WC()->cart->empty_cart();
@@ -445,9 +447,31 @@ class EMYUI_Package_Product {
                                     'domain_name' => $name
                                 ) 
                             );
-                            $cart_url = wc_get_cart_url();
                             $emyui_main = emyui_main::instance();
                             $emyui_main->emyui_set_woocommerce_notice_transient('woocommerce_notice_cart','Your package has been added.','notice',60);
+                            $cart_url = wc_get_cart_url();
+                            wp_send_json_success(
+                                array(
+                                    'success'  => true,
+                                    'cart_url' => $cart_url,
+                                )
+                            );
+                            exit();
+                        }
+                    }elseif($domain_selected == 'existing' && $domain_tlds){
+                        $domain_name = isset($data['domain_name']) ? sanitize_text_field($data['domain_name']) : '';
+                        $domain_id   = isset($data['domain_id']) ? sanitize_text_field($data['domain_id']) : '';
+                        if(class_exists('WC_Cart') && WC()->cart && $domain_name){
+                            if(WC()->cart->get_cart_contents_count() > 0 ){
+                                WC()->cart->empty_cart();
+                            }
+                            WC()->cart->add_to_cart( $package_id, 1, '', '', array(
+                                    'domain_name' => $domain_name
+                                ) 
+                            );
+                            $emyui_main = emyui_main::instance();
+                            $emyui_main->emyui_set_woocommerce_notice_transient('woocommerce_notice_cart','Your package has been added.','notice',60);
+                            $cart_url = wc_get_cart_url();
                             wp_send_json_success(
                                 array(
                                     'success'  => true,
@@ -617,7 +641,7 @@ class EMYUI_Package_Product {
      * Cart empty button text changed.
      **/
     public static function emyui_woocommerce_return_to_shop_text($text){
-        $text = __( 'Return to package', 'woocommerce' );
+        $text = __( 'Back', 'woocommerce' );
         return $text;
     }
 
