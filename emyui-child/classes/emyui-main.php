@@ -18,6 +18,9 @@ class emyui_main{
   public function __construct(){
       add_shortcode('wc_login_logout_list', array($this, 'emyui_login_logout_list_shortcode'));
       add_action( 'template_redirect', array($this,'emyui_redirection_template'));
+      add_filter('woocommerce_settings_tabs_array', array($this, 'emyui_woocommerce_settings_tab'), 50);
+      add_action('woocommerce_settings_vlab_tab', array($this, 'emyui_woocommerce_settings_tab_content'));
+      add_action('woocommerce_update_options_vlab_tab', array($this, 'emyui_woocommerce_update_settings'));
   }
 
    /**
@@ -172,6 +175,47 @@ class emyui_main{
         $dropdown_html .= '</div>';
       }
       return $dropdown_html;
+    }
+
+    /**
+     * 01-20-2025
+     * 
+     * Create a custom tab
+     **/
+    public function emyui_woocommerce_settings_tab($settings_tabs) {
+        $settings_tabs['vlab_tab'] = __('Vlab Hosting Settings', 'emyui');
+        return $settings_tabs;
+    }
+
+    /**
+     * 01-20-2025
+     * 
+     * Settings tab content
+     **/
+    public function emyui_woocommerce_settings_tab_content() {
+      $saved_fields = get_option('emyui_data_center', []);
+      require_once(EMUI_VIEWS.'/data-center.php');
+    }
+
+    /**
+     * 01-20-2025
+     * 
+     * Settings tab update
+     **/
+    public function emyui_woocommerce_update_settings() {
+      if(isset($_POST['emyui_data_center']) && is_array($_POST['emyui_data_center'])){
+        $non_empty_fields = array_filter($_POST['emyui_data_center'], function($value){
+          return !empty(trim($value));
+        });
+        if(!empty($non_empty_fields)){
+          $sanitized_fields = array_map('sanitize_text_field', $non_empty_fields);
+          update_option('emyui_data_center', $sanitized_fields);
+        }else{
+          delete_option('emyui_data_center');
+        }
+      }else{
+        delete_option('emyui_data_center');
+      }
     }
 }
 emyui_main::instance();

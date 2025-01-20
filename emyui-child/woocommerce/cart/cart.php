@@ -154,14 +154,25 @@ do_action( 'woocommerce_before_cart' ); ?>
 						<td id="selected-plan-price"><?php echo $default_plan_price; ?></td>
     					<td id="selected-plan-offer"><?php echo $default_plan_offer; ?></td>
 					</tr>
-					<tr>
-						<td>
-							<select name="emyui_data_center_id" class="emyui-data-center_id">
-								<option value="virginia">USA, Virginia</option>
-							</select>
-						</td>
-					</tr>
-					<?php
+					<?php 
+					$saved_fields = get_option('emyui_data_center', []);
+					if(is_array($saved_fields) && !empty($saved_fields)){
+						?>
+						<tr>
+							<td>
+								<select name="emyui_data_center_id" class="emyui-data-center_id">
+									<?php 
+									foreach ($saved_fields as $key => $data_center) {
+										?>
+										<option value="<?php echo $data_center; ?>"><?php echo $data_center; ?></option>
+										<?php
+									}
+									?>
+								</select>
+							</td>
+						</tr>
+						<?php
+					}
 				}
 			}
 			?>

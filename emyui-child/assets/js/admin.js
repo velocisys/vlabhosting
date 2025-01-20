@@ -50,4 +50,26 @@ jQuery(document).ready(function($) {
     jQuery('.emyui-hosting-plan-main .checkbox').on('change', function() {
         jQuery('.emyui-hosting-plan-main .checkbox').not(this).prop('checked', false);
     });
+
+    jQuery('#add-emyui-field').click(function () {
+        var newField = `
+                    <div class="emyui-field">
+                        <input type="text" name="emyui_data_center[]" placeholder="Enter value">
+                        <button type="button" class="button remove-emyui-field">
+                            <span class="dashicons dashicons-remove"></span>
+                        </button>
+                    </div>
+        `;
+        jQuery('#emyui-fields-container').append(newField);
+    });
+
+    jQuery(document).on('click', '.remove-emyui-field', function () {
+        jQuery(this).parent('.emyui-field').remove();
+    });
+    
+    if(jQuery('#emyui-fields-container').length){
+        jQuery('#emyui-fields-container').sortable({
+            placeholder: "ui-state-highlight"
+        });
+    }
 });
