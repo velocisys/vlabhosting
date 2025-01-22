@@ -140,6 +140,53 @@ class emyui_api{
         }
         return $domainArr;
       }
+
+      /**
+       * 01-21-2025
+       * 
+       * Create a account WHM API
+       **/
+      public function emyui_create_whm_account($username, $domain, $password, $contactemail, $plan = 'default', $featurelist = 'default', $quota = 5000) {
+        $whm_server   = "mi3-tr105.supercp.com";
+        $api_endpoint = "https://$whm_server:2087/json-api/createacct?api.version=1";
+        $auth_token   = "dmxhYmhvc3Q6OClBaWUqN1hXbDd0Qjg=";
+        $data = [
+          'username'      => $username,
+          'domain'        => $domain,
+          'password'      => $password,
+          'contactemail'  => $contactemail,
+          'plan'          => $plan,
+          'featurelist'   => $featurelist,
+          'quota'         => $quota,
+        ];
+        $headers = [
+          'Authorization' => 'Basic ' . $auth_token,
+          'Content-Type'  => 'application/x-www-form-urlencoded',
+        ];
+        $response = wp_remote_post($api_endpoint, [
+          'headers' => $headers,
+          'body'    => $data,
+          'timeout' => 30,
+        ]);
+        $output = [
+          'success' => false,
+          'message' => '',
+        ];
+        if(is_wp_error($response)) {
+          $output['message'] = 'HTTP Error: ' . $response->get_error_message();
+          return $output;
+        }
+        $response_body = wp_remote_retrieve_body($response);
+        $result = json_decode($response_body, true);
+        if(isset($result['metadata']['result']) && $result['metadata']['result'] == 1) {
+          $output['success'] = true;
+          $output['message'] = 'Account created successfully for username: ' . $username;
+        }else{
+          $output['message'] = isset($result['metadata']['reason']) ? $result['metadata']['reason'] : 'Unknown error occurred.';
+        }
+        return $output;
+      }
+
       public function emyui_get_domain_whois_data1(){
         if(isset($_GET['test']) && $_GET['test'] == 1){
             $data = $this->emyui_get_domain_whois_data('vlabhosting.com');

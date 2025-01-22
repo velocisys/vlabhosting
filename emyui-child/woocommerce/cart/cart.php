@@ -163,8 +163,13 @@ do_action( 'woocommerce_before_cart' ); ?>
 								<select name="emyui_data_center_id" class="emyui-data-center_id">
 									<?php 
 									foreach ($saved_fields as $key => $data_center) {
+										if(isset($_COOKIE['data_center']) && $_COOKIE['data_center'] == $data_center){
+											$selected = 'selected';
+										}else{
+											$selected = '';
+										}
 										?>
-										<option value="<?php echo $data_center; ?>"><?php echo $data_center; ?></option>
+										<option <?php echo $selected; ?> value="<?php echo $data_center; ?>"><?php echo $data_center; ?></option>
 										<?php
 									}
 									?>

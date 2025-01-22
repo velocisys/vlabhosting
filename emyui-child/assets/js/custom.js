@@ -134,17 +134,14 @@ jQuery(document).ready(function($) {
      * 
      * Domain radio button
      **/
-    /*jQuery(document).on('change', 'input[name="emyui_domain"]', function(){
+    jQuery(document).on('change', 'select[name="emyui_data_center_id"]', function(){
         var self = jQuery(this);
-        self.parents('form.domain-header-search-form').find('.error').remove();
-        if(self.val() == 'new'){
-            self.parents('form.domain-header-search-form').find('.emyui-domain-tdls').show();
-            self.parents('form.domain-header-search-form').find('.emyui-domain-tdls select[name="emyui_domain_tlds"]').removeAttr('disabled');
+        if(self.val() != ''){
+            emyui_set_cookie('data_center', self.val(), 1);
         }else{
-            self.parents('form.domain-header-search-form').find('.emyui-domain-tdls').hide();
-            self.parents('form.domain-header-search-form').find('.emyui-domain-tdls select[name="emyui_domain_tlds"]').attr('disabled', 'disabled');
+            emyui_delete_cookie('data_center');
         }
-    });*/
+    });
 });
 
 /**
