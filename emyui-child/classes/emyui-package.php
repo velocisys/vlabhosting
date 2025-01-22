@@ -62,6 +62,11 @@ class EMYUI_Package_Product {
         add_filter( 'woocommerce_return_to_shop_text', array(__CLASS__, 'emyui_woocommerce_return_to_shop_text'));
         add_action( 'wp_ajax_emyui_package', array(__CLASS__, 'emyui_package' ));
         add_action( 'wp_ajax_nopriv_emyui_package', array(__CLASS__, 'emyui_package' ));
+        add_filter('woocommerce_account_menu_items', array(__CLASS__,'emyui_add_my_account_tab'), 10, 1);
+        add_action('init', array(__CLASS__,'emyui_add_my_account_endpoint'));
+        add_action('woocommerce_account_vlab_endpoint', array(__CLASS__,'emyui_my_account_tab_content'));
+        add_action('admin_init', array(__CLASS__, 'emyui_admin_init'));
+        add_action('woocommerce_cart_calculate_fees', array(__CLASS__,'emyui_add_extra_charges'), 10, 1);
         self::$initialized = true;
     }
 
@@ -683,5 +688,63 @@ class EMYUI_Package_Product {
         wp_send_json_error();
         exit();
     }
+
+    /**
+     * 01-23-2025
+     * 
+     * Added custom tab
+     **/
+    public static function emyui_add_my_account_tab($items) {
+        $new_tab_slug   = 'vlab';
+        $new_tab_title  = __('Vlab Hosting', 'emyui');
+        $logout         = $items['customer-logout'];
+        unset($items['customer-logout']);
+        $items[$new_tab_slug]       = $new_tab_title;
+        $items['customer-logout']   = $logout;
+        unset($items['downloads']);
+        return $items;
+    }
+
+    /**
+     * 01-23-2025
+     * 
+     * Register endpoint
+     **/
+    public static function emyui_add_my_account_endpoint() {
+        add_rewrite_endpoint('vlab', EP_PAGES);
+    }
+
+    /**
+     * 01-23-2025
+     * 
+     * Display tab conetent
+     **/
+    public static function emyui_my_account_tab_content() {
+        echo '<h3>' . __('Welcome to Vlab Hosting', 'emyui') . '</h3>';
+    }
+
+    /**
+     * 01-23-2025
+     * 
+     * Flush rewrites roles
+     **/
+    public static function emyui_admin_init() {
+        flush_rewrite_rules();
+    }
+
+    /**
+     * 01-23-2025
+     * 
+     * calculate extra charges
+     **/
+    public static function emyui_add_extra_charges($cart) {
+        if(is_admin() || !WC()->cart || WC()->cart->is_empty()) {
+            return;
+        }
+        $extra_charge_amount = 50;
+        $hidden_fee_title    = '';
+        $cart->add_fee($hidden_fee_title, $extra_charge_amount, false);
+    }
+
 }
 EMYUI_Package_Product::init();

@@ -18,6 +18,8 @@ class emyui_api{
   public function __construct(){
     add_action('admin_init', array($this, 'emyui_create_or_update_package'));
     add_action('init', array($this, 'emyui_get_domain_whois_data1'));
+    add_action( 'woocommerce_order_status_completed', array($this, 'emyui_order_status_completed' ));
+    //add_action( 'woocommerce_payment_complete', array($this, 'emyui_order_status_completed' ));
   }
 
   /**
@@ -187,13 +189,38 @@ class emyui_api{
         return $output;
       }
 
-      public function emyui_get_domain_whois_data1(){
-        if(isset($_GET['test']) && $_GET['test'] == 1){
-            $data = $this->emyui_get_domain_whois_data('vlabhosting.com');
-            echo '<pre>';
-            print_r($data);
-            die();
+    /**
+     * 01-22-2025
+     * 
+     * Order status completed callback
+     **/
+    public function emyui_order_status_completed($order_id){
+        $order            = wc_get_order( $order_id );
+        $customer_id      = $order->get_customer_id();
+        $password         = wp_generate_password(12, true);
+        $username         = sanitize_user($order->get_billing_first_name() . $order->get_billing_last_name());
+        $contactemail     = sanitize_email($order->get_billing_email());
+        $plan             = 'default'; 
+        $featurelist      = 'default'; 
+        $quota            = 5000;
+        $domain = '';
+        foreach ($order->get_items() as $item) {
+            $line_item_domain = $item->get_meta('domain_name');
+            if(!empty($line_item_domain)) {
+                $domain = sanitize_text_field($line_item_domain);
+                break;
+            }
         }
+        $customer_account = $this->emyui_create_whm_account($username, $domain, $password, $contactemail, $plan, $featurelist, $quota);
+    }
+
+    public function emyui_get_domain_whois_data1(){
+      if(isset($_GET['test']) && $_GET['test'] == 1){
+          $data = $this->emyui_get_domain_whois_data('vlabhosting.com');
+          echo '<pre>';
+          print_r($data);
+          die();
       }
+    }
 }
 emyui_api::instance();
