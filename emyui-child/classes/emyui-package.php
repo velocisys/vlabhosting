@@ -695,12 +695,9 @@ class EMYUI_Package_Product {
      * Added custom tab
      **/
     public static function emyui_add_my_account_tab($items) {
-        $new_tab_slug   = 'vlab';
-        $new_tab_title  = __('Vlab Hosting', 'emyui');
-        $logout         = $items['customer-logout'];
-        unset($items['customer-logout']);
-        $items[$new_tab_slug]       = $new_tab_title;
-        $items['customer-logout']   = $logout;
+        $items = array_slice( $items, 0, 1, true ) 
+        + array( 'vlab' => __('Vlab Hosting', 'emyui') )
+        + array_slice( $items, 1, NULL, true );
         unset($items['downloads']);
         return $items;
     }
