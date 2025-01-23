@@ -19,8 +19,8 @@ class emyui_main{
       add_shortcode('wc_login_logout_list', array($this, 'emyui_login_logout_list_shortcode'));
       add_action( 'template_redirect', array($this,'emyui_redirection_template'));
       add_filter('woocommerce_settings_tabs_array', array($this, 'emyui_woocommerce_settings_tab'), 50);
-      add_action('woocommerce_settings_vlab_tab', array($this, 'emyui_woocommerce_settings_tab_content'));
-      add_action('woocommerce_update_options_vlab_tab', array($this, 'emyui_woocommerce_update_settings'));
+      add_action('woocommerce_settings_vlab-tab', array($this, 'emyui_woocommerce_settings_tab_content'));
+      add_action('woocommerce_update_options_vlab-tab', array($this, 'emyui_woocommerce_update_settings'));
   }
 
    /**
@@ -183,7 +183,7 @@ class emyui_main{
      * Create a custom tab
      **/
     public function emyui_woocommerce_settings_tab($settings_tabs) {
-        $settings_tabs['vlab_tab'] = __('Vlab Hosting Settings', 'emyui');
+        $settings_tabs['vlab-tab'] = __('Vlab Hosting Settings', 'emyui');
         return $settings_tabs;
     }
 
@@ -215,6 +215,19 @@ class emyui_main{
         }
       }else{
         delete_option('emyui_data_center');
+      }
+      $options = [
+        'whm_user_name' => 'whm_user_name',
+        'whm_token' => 'whm_token',
+        'whm_server_url' => 'whm_server_url',
+        'ip2whois_api_key' => 'ip2whois_api_key',
+      ];
+      foreach ($options as $option_key => $post_field){
+        if(isset($_POST[$post_field]) && !empty($_POST[$post_field])) {
+          update_option($option_key, sanitize_text_field($_POST[$post_field]));
+        }else{
+          delete_option($option_key);
+        }
       }
     }
 }

@@ -24,7 +24,7 @@ function emyui_child_enqueue_styles() {
     ]);
 }
 function emyui_child_enqueue_admin_scripts() {
-    if((isset($_GET['post_type']) && $_GET['post_type'] == 'product') || (isset($_GET['post']) && get_post_type($_GET['post']) == 'product') || (isset($_GET['tab']) && $_GET['tab'] == 'vlab_tab')) {
+    if((isset($_GET['post_type']) && $_GET['post_type'] == 'product') || (isset($_GET['post']) && get_post_type($_GET['post']) == 'product') || (isset($_GET['tab']) && $_GET['tab'] == 'vlab-tab')) {
         wp_enqueue_script('jquery');
         wp_enqueue_script('custom-admin-js', EMUI_JS . '/admin.js?time='.time(), array('jquery'), '1.0', true);
         wp_enqueue_style('custom-admin-style', EMUI_CSS . '/admin.css?time='.time());
