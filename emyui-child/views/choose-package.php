@@ -26,7 +26,7 @@
                     <div class="col-lg-4 col-12 mb-lg-0 mb-15">
                        <div class="ddos-attack-package vpn-version shadow-2 <?php echo $featured_class; ?> <?php echo $not_features; ?>">
                             <?php echo $featured_package_text; ?>
-                            <h2 class="coodiv-text-9 mb-0"><?php echo $formatted_title; ?></h2>
+                            <h3 class="coodiv-text-9 mb-0"><?php echo $formatted_title; ?></h3>
                             <div class="ddos-attack-price d-flex justify-content-between align-items-center mt-7 py-4">
                                 <?php echo $product->get_price_html(); ?>
                                  <?php 

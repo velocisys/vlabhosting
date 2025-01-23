@@ -2,14 +2,12 @@
     <div class="row justify-content-center">
         <div class=";">
             <div class="hero-content dark-mode-texts mb-15 mb-lg-30 text-center text-md-center">
-                <h4 class="coodiv-text-12 text-uppercase mb-3 coodiv-color-white-opacity-7">
-                    <?php _e('EMYUI TEMPLATE', 'emyui'); ?>   
-                </h4>
                 <h1 class="coodiv-text-4 text-white d-block mb-0"></h1>
                 <h1 class="coodiv-text-4 position-relative mb-5">
-                    <span id="typed" class="strike-bottom green d-inline-block"><?php _e('for your web hosting company', 'emyui'); ?></span>
-                    <span class="typed-cursor" aria-hidden="true">|</span></h1>
-                <p data-i18n="[html]genaral.homapgesubtitle" class="coodiv-text-9 px-7 mb-0 coodiv-color-white-opacity-7 mb-10"></p>
+                <span id="typed" class="strike-bottom green d-inline-block">
+                    <?php _e('For your web hosting company', 'emyui'); ?>
+                </span>
+                <p class="coodiv-text-9 px-7 mb-0 coodiv-color-white-opacity-7 mb-10"></p>
                 <form class="domain-header-search-form d-flex flex-wrap bg-white" action="" method="post">
                     <div class="single-input w-100 w-sm-50 w-lg-35 py-4 col-md-8 pr-lg-0 emyui-domain-choose">
                         <label class="emyui-label">
