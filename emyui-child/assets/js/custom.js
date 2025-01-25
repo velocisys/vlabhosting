@@ -39,10 +39,8 @@ jQuery(document).on('submit', 'form.domain-header-search-form', function(event){
                     window.location.href = response.data.cart_url;
                 }
             }else{
-                if(response && response.data.msg && response.data.domain_tdls){
+                if(response && response.data.domain_tdls){
                     self.find('.search-btn').parent('.single-input').before(response.data.domain_tdls);
-                    self.find('.emyui-suggest-domain').prepend(response.data.msg);
-                    //domain.after(response.data.msg);
                 }
                 domain.removeAttr('readonly', 'readonly');
                 self.find('.search-btn').removeAttr('disabled');
@@ -96,6 +94,7 @@ jQuery(document).ready(function($) {
             jQuery('#selected-plan-offer').text('');
             emyui_delete_cookie('plan_offer');
         }
+        location.reload();
     });
 
     /**

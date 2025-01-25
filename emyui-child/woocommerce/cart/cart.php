@@ -99,6 +99,9 @@ do_action( 'woocommerce_before_cart' ); ?>
 						</td>
 					</tr>
 					<tr>
+						<td><h3><?php _e('Additional information', 'emyui'); ?></h3></td>
+					</tr>
+					<tr>
 						<td>
 							<?php 
 								$emyui_main = emyui_main::instance();
