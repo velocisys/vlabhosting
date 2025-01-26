@@ -230,5 +230,24 @@ class emyui_main{
         }
       }
     }
+
+    /**
+     * 01-25-2024
+     * 
+     * 
+     * is valid domain name
+     **/
+    public function emyui_is_valid_domain_name($domain_name){
+        if(strpos($domain_name, " ") !== false) {
+            return false;
+        }
+        if(strlen($domain_name) > 253) {
+            return false;
+        }
+        if(preg_match('/[\'^£$%&*()}{@#~?><>,|=_+¬]/', $domain_name)){
+            return false;
+        }
+        return true;
+    }
 }
 emyui_main::instance();
