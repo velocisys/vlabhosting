@@ -77,10 +77,11 @@ class EMYUI_Package_Product {
      * @return array
      */
     public static function emyui_add_package_options_tab($tabs) {
-        $tabs['inventory']['class'][]       = 'hide_if_package';
-        $tabs['shipping']['class'][]        = 'hide_if_package';
-        $tabs['linked_product']['class'][]  = 'hide_if_package';
-        $tabs['attribute']['class'][]       = 'hide_if_package';
+        unset($tabs['inventory']);
+        unset($tabs['shipping']);
+        unset($tabs['linked_product']);
+        unset($tabs['attribute']);
+        unset($tabs['attribute']);
         $tabs['package_options'] = [
             'label'    => __('Package Options', 'emyui'),
             'target'   => 'package_options_data',
@@ -575,67 +576,69 @@ class EMYUI_Package_Product {
      * Add custom fields to the Advanced tab in WooCommerce settings.
      **/
     public static function emyui_add_custom_plans_field() {
-        woocommerce_wp_textarea_input( array(
-            'id'            => '_featured_package_text',
-            'label'         => __( 'Package Overview', 'woocommerce' ),
-            'placeholder'   => __( 'Provide a concise description of the featured package', 'woocommerce' ),
-            'desc_tip'      => true,
-            'description'   => __( 'Enter a brief and professional description highlighting the key benefits and features of the package.', 'woocommerce' ),
-        ));
-        woocommerce_wp_text_input( array(
-            'id'            => '_package_offer_text',
-            'label'         => __( 'Package Offer', 'woocommerce' ),
-            'placeholder'   => __( 'Package Offer', 'woocommerce' ),
-            'desc_tip'      => true,
-            'description'   => __( 'Package offer.', 'woocommerce' ),
-        ));
-        $package_id     = isset($_GET['post']) ? sanitize_text_field($_GET['post']) : '';
-        $package_group  = get_post_meta($package_id, '_hosting_plan_meta', true);
-        if(!empty($package_group)){
-            $plan_meta = json_decode($package_group, true);
-            require_once(EMUI_VIEWS.'/package-custom-general-tab.php');
-        }else{
-            echo sprintf('<div class="emyui-hosting-plan-main" data-id="0">');
-                woocommerce_wp_checkbox(array(
-                    'id'            => '_hosting_plan_defaul_0',
-                    'name'          => '_hosting_plan[0][plan_default]',
-                    'label'         => __('Hosting Plan Default', 'woocommerce'),
-                    'desc_tip'      => false,
-                    'description'   => __('Mark this as the default hosting plan', 'woocommerce'),
-                    'value'         => 'yes',
-                    'class'         => 'checkbox'
-                ));
-                woocommerce_wp_text_input(array(
-                    'id'            => '_hosting_plan_name_0',
-                    'name'          => '_hosting_plan[0][plan_name]',
-                    'label'         => __('Hosting Plan Name', 'woocommerce'),
-                    'placeholder'   => 'Enter hosting plan name',
-                    'desc_tip'      => false,
-                    'description'   => __('Enter the name for the hosting plan.', 'woocommerce'),
-                    'type'          => 'text'
-                ));
-                woocommerce_wp_text_input(array(
-                    'id'            => '_hosting_plan_price_0',
-                    'name'          => '_hosting_plan[0][plan_price]',
-                    'label'         => __('Hosting Plan Price', 'woocommerce'),
-                    'placeholder'   => 'Enter hosting plan price',
-                    'desc_tip'      => false,
-                    'description'   => __('Enter the price for the hosting plan.', 'woocommerce'),
-                    'type'          => 'text'
-                ));
-                woocommerce_wp_textarea_input(array(
-                    'id'            => '_hosting_plan_offer_text_0',
-                    'name'          => '_hosting_plan[0][plan_offer]',
-                    'label'         => __('Offer Text', 'woocommerce'),
-                    'placeholder'   => 'Enter offer text',
-                    'desc_tip'      => false,
-                    'description'   => __('Enter the offer text for this hosting plan.', 'woocommerce'),
-                    'type'          => 'textarea'
-                ));
-            echo sprintf('</div>');
-        }
-        echo '<div id="hosting-plan-repeater">';
-        echo sprintf('<button type="button" id="add-new-hosting-plan" class="button">%s</button>', __('Add New Hosting Plan', 'emyui'));
+        echo '<div class="options_group hide_if_simple hide_if_external hide_if_downloadable hide_if_variable">';
+            woocommerce_wp_textarea_input( array(
+                'id'            => '_featured_package_text',
+                'label'         => __( 'Package Overview', 'woocommerce' ),
+                'placeholder'   => __( 'Provide a concise description of the featured package', 'woocommerce' ),
+                'desc_tip'      => true,
+                'description'   => __( 'Enter a brief and professional description highlighting the key benefits and features of the package.', 'woocommerce' ),
+            ));
+            woocommerce_wp_text_input( array(
+                'id'            => '_package_offer_text',
+                'label'         => __( 'Package Offer', 'woocommerce' ),
+                'placeholder'   => __( 'Package Offer', 'woocommerce' ),
+                'desc_tip'      => true,
+                'description'   => __( 'Package offer.', 'woocommerce' ),
+            ));
+            $package_id     = isset($_GET['post']) ? sanitize_text_field($_GET['post']) : '';
+            $package_group  = get_post_meta($package_id, '_hosting_plan_meta', true);
+            if(!empty($package_group)){
+                $plan_meta = json_decode($package_group, true);
+                require_once(EMUI_VIEWS.'/package-custom-general-tab.php');
+            }else{
+                echo sprintf('<div class="emyui-hosting-plan-main" data-id="0">');
+                    woocommerce_wp_checkbox(array(
+                        'id'            => '_hosting_plan_defaul_0',
+                        'name'          => '_hosting_plan[0][plan_default]',
+                        'label'         => __('Hosting Plan Default', 'woocommerce'),
+                        'desc_tip'      => false,
+                        'description'   => __('Mark this as the default hosting plan', 'woocommerce'),
+                        'value'         => 'yes',
+                        'class'         => 'checkbox'
+                    ));
+                    woocommerce_wp_text_input(array(
+                        'id'            => '_hosting_plan_name_0',
+                        'name'          => '_hosting_plan[0][plan_name]',
+                        'label'         => __('Hosting Plan Name', 'woocommerce'),
+                        'placeholder'   => 'Enter hosting plan name',
+                        'desc_tip'      => false,
+                        'description'   => __('Enter the name for the hosting plan.', 'woocommerce'),
+                        'type'          => 'text'
+                    ));
+                    woocommerce_wp_text_input(array(
+                        'id'            => '_hosting_plan_price_0',
+                        'name'          => '_hosting_plan[0][plan_price]',
+                        'label'         => __('Hosting Plan Price', 'woocommerce'),
+                        'placeholder'   => 'Enter hosting plan price',
+                        'desc_tip'      => false,
+                        'description'   => __('Enter the price for the hosting plan.', 'woocommerce'),
+                        'type'          => 'text'
+                    ));
+                    woocommerce_wp_textarea_input(array(
+                        'id'            => '_hosting_plan_offer_text_0',
+                        'name'          => '_hosting_plan[0][plan_offer]',
+                        'label'         => __('Offer Text', 'woocommerce'),
+                        'placeholder'   => 'Enter offer text',
+                        'desc_tip'      => false,
+                        'description'   => __('Enter the offer text for this hosting plan.', 'woocommerce'),
+                        'type'          => 'textarea'
+                    ));
+                echo sprintf('</div>');
+            }
+            echo '<div id="hosting-plan-repeater">';
+            echo sprintf('<button type="button" id="add-new-hosting-plan" class="button">%s</button>', __('Add New Hosting Plan', 'emyui'));
+            echo '</div>';
         echo '</div>';
     }
 

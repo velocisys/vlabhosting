@@ -35,6 +35,7 @@ add_action('admin_enqueue_scripts', 'emyui_child_enqueue_admin_scripts');
 require_once(EMUI_CLASSES.'/emyui-main.php');
 require_once(EMUI_CLASSES.'/emyui-api.php');
 require_once(EMUI_CLASSES.'/emyui-package.php');
+require_once(EMUI_CLASSES.'/emyui-domain.php');
 
 /**
  * 01-15-2025
