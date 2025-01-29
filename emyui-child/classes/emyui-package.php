@@ -46,7 +46,6 @@ class EMYUI_Package_Product {
 
         add_filter('product_type_selector', array(__CLASS__, 'emyui_add_package_product_type'));
         add_action('woocommerce_process_product_meta', array(__CLASS__, 'emyui_save_package_fields'));
-        add_action('woocommerce_single_product_summary', array(__CLASS__, 'emyui_display_package_fields'), 20);
         add_filter('woocommerce_product_data_tabs', array(__CLASS__, 'emyui_add_package_options_tab'));
         add_action('woocommerce_product_data_panels', array(__CLASS__, 'emyui_add_package_fields'));
         add_shortcode( 'package_pricing', array(__CLASS__, 'emyui_package_pricing_shortcode'));
@@ -80,7 +79,6 @@ class EMYUI_Package_Product {
         unset($tabs['inventory']);
         unset($tabs['shipping']);
         unset($tabs['linked_product']);
-        unset($tabs['attribute']);
         unset($tabs['attribute']);
         $tabs['package_options'] = [
             'label'    => __('Package Options', 'emyui'),
@@ -273,25 +271,6 @@ class EMYUI_Package_Product {
             }
         }else{
             delete_post_meta($post_id, '_hosting_plan_meta');
-        }
-    }
-
-    /**
-     * 18-12-2024
-     * 
-     * Display custom fields on the single product page for Package type.
-     */
-    public static function emyui_display_package_fields() {
-        global $product;
-        if ($product->get_type() === 'package') {
-            $packageQuota = self::get_package_meta($product->get_id(), '_package_quota');
-            $pacakgeFtp  = self::get_package_meta($product->get_id(), '_package_maxftp');
-            if ($packageQuota || $pacakgeFtp) {
-                echo '<div class="woocommerce-package-details">';
-                echo '<p><strong>' . __('Package Qupta:', 'emyui') . '</strong> ' . esc_html($packageQupta) . ' MB</p>';
-                echo '<p><strong>' . __('Pacakge Ftp:', 'emyui') . '</strong> ' . esc_html($pacakgeFtp) . ' MB</p>';
-                echo '</div>';
-            }
         }
     }
 
@@ -576,7 +555,7 @@ class EMYUI_Package_Product {
      * Add custom fields to the Advanced tab in WooCommerce settings.
      **/
     public static function emyui_add_custom_plans_field() {
-        echo '<div class="options_group hide_if_simple hide_if_external hide_if_downloadable hide_if_variable">';
+        echo '<div class="options_group hide_if_simple hide_if_external hide_if_downloadable hide_if_variable hide_if_domain">';
             woocommerce_wp_textarea_input( array(
                 'id'            => '_featured_package_text',
                 'label'         => __( 'Package Overview', 'woocommerce' ),
