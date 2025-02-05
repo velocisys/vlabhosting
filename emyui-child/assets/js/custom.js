@@ -141,6 +141,57 @@ jQuery(document).ready(function($) {
             emyui_delete_cookie('data_center');
         }
     });
+
+    /**
+     * 01-30-2025
+     * 
+     * Tld box open and close
+     **/
+    jQuery(document).on('click', '.emyui-domain-tdls .nice-select', function(){
+        var domainListWrap = jQuery(this).parents('.domain-header-search-form').find('.emyui-domain-list-wrap');
+        if(domainListWrap.length){
+            if(domainListWrap.hasClass('hidden')){
+             domainListWrap.removeClass('hidden');
+            }else{
+             domainListWrap.addClass('hidden');
+            }
+        }
+    });
+
+    /**
+     * 02-05-2025
+     * 
+     * Domain tab handle
+     **/
+    jQuery(document).on('click', '.emyui-domain a', function(e){
+        e.preventDefault();
+        jQuery('.emyui-domain .toggle-domain-s-t').removeClass('active-link-border').addClass('not-active-link-border');
+        jQuery(this).removeClass('not-active-link-border').addClass('active-link-border');
+        if($(this).index() === 0) {
+            $('.emyui-domain-panel').show();
+            $('.emyui-domai-ai-panel').hide();
+            $('.emyui-domai-ai-panel').addClass('hidden');
+        }else{
+            $('.emyui-domain-panel').hide();
+            $('.emyui-domai-ai-panel').show();
+            $('.emyui-domai-ai-panel').removeClass('hidden');
+        }
+    });
+
+    /**
+     * 02-05-2025
+     * 
+     * Domain search With AI char length validation
+     **/
+    $(document).on('input', '#domain-search', function() {
+        var maxLength = 250;
+        var charCount = $(this).val().length;
+        if(charCount > maxLength){
+            $(this).val($(this).val().substring(0, maxLength));
+            charCount = maxLength;
+        }
+        $('#char-count').text(charCount);
+    });
 });
 
 /**

@@ -34,6 +34,9 @@
                                 ?>
                             </select>
                         </div>
+                        <div class="col-md-12 pr-lg-0 pl-lg-0 emyui-domain-list-wrap hidden">
+                            <?php echo do_shortcode('[domain_products]'); ?>
+                        </div>
                         <div class="single-input w-100 w-lg-30 d-flex align-items-center justify-content-center border-0 pb-4 pt-lg-4 pt-0 pl-lg-0 col-md-4">
                             <button class="btn btn-primary search-btn rounded-right-10-0 full-border-radius-10-sm" type="submit">
                                 <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display:none;"></span>
