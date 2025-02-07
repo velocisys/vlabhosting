@@ -192,6 +192,31 @@ jQuery(document).ready(function($) {
         }
         $('#char-count').text(charCount);
     });
+
+    $(document).on('submit', 'form[name="emyui-domain-search"]', function(event){
+        event.preventDefault();
+        var self = jQuery(this);
+        self.find('.emyui-error-msg').html('');
+        self.find('.spinner-border').show();
+        var domain_field = self.find('input[name="domain"]');
+        if(domain_field.val() == ''){
+            self.find('.emyui-error-msg').html(load_emyui.required);
+            self.find('.spinner-border').hide();
+            return;
+        }
+    });
+
+    /**
+     * 02-07-2025
+     * 
+     * Domain view button
+     **/
+    jQuery('.hidden-domain').hide();
+    $(document).on("click", ".domain-view-more-btn", function() {
+        $(this).prev(".row").find(".hidden-domain").slideDown();
+        $(this).hide();
+    });
+
 });
 
 /**

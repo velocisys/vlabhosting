@@ -665,7 +665,7 @@ class EMYUI_domain_Product {
      * 
      * Domain shortCode
      **/
-    public static function emyui_display_domain_products($atts) {
+    /*public static function emyui_display_domain_products($atts) {
         ob_start();
         $atts = shortcode_atts(array(
             'limit' => -1,
@@ -673,6 +673,8 @@ class EMYUI_domain_Product {
         $args = array(
             'post_type'      => 'product',
             'posts_per_page' => intval($atts['limit']),
+            'orderby'        => 'menu_order',
+            'order'          => 'ASC',
             'tax_query'      => array(
                 array(
                     'taxonomy' => 'product_type',
@@ -708,21 +710,116 @@ class EMYUI_domain_Product {
             wp_reset_postdata();
         }
         echo '<div id="emyui_domain_select_list" class="domains_list">';
-        echo '<div class="emyui_domains_list_wrapper">';
-        foreach ($categories as $key => $heading) {
-            if (!empty($domains[$key])) {
-                echo '<div class="emyui_domains_list_wrapper">';
-                echo '<h3>' . esc_html($heading) . '</h3>';
-                echo '<ul class="domain-list">';
-                foreach ($domains[$key] as $domain) {
-                    echo '<li class="text--weight-m" data-tld="' . esc_attr($domain['tld']) . '" data-product_id="' . esc_attr($domain['product_id']) . '"><div class="tld-domain-price-wrap"><span class="tld-domain-span">' . esc_html($domain['tld']) . '</span>'.wc_price($domain['price']).'</div></li>';
+            echo '<div class="emyui_domains_list_wrapper">';
+                foreach ($categories as $key => $heading) {
+                    if (!empty($domains[$key])) {
+                        echo '<div class="emyui_domains_list_wrapper">';
+                            echo '<h3>' . esc_html($heading) . '</h3>';
+                            echo '<ul class="domain-list">';
+                            $count = 0;
+                            foreach ($domains[$key] as $domain) {
+                                $count++;
+                                $extra_class = ($count > 15) ? 'hidden-domain' : '';
+                                echo '<li class="text--weight-m ' . esc_attr($extra_class) . '" data-tld="' . esc_attr($domain['tld']) . '" data-product_id="' . esc_attr($domain['product_id']) . '">
+                                        <div class="tld-domain-price-wrap">
+                                        <span class="tld-domain-span">' . esc_html($domain['tld']) . '</span>' . wc_price($domain['price']) . '
+                                     </div>
+                                </li>';
+                            }
+                            echo '</ul>';
+                            if($count > 15) {
+                                echo '<button class="domain-view-more-btn btn btn-primary">'.__('View More', 'emyui').'</button>';
+                            }
+                        echo '</div>';
+                    }
                 }
-                echo '</ul>';
-                echo '</div>';
+            echo '</div>';
+        echo '</div>';
+        return ob_get_clean();
+    }*/
+
+    public static function emyui_display_domain_products($atts) {
+        ob_start();
+        $atts = shortcode_atts(array(
+            'limit' => -1,
+        ), $atts);
+        $args = array(
+            'post_type'      => 'product',
+            'posts_per_page' => intval($atts['limit']),
+            'orderby'        => 'menu_order',
+            'order'          => 'ASC',
+            'tax_query'      => array(
+                array(
+                    'taxonomy' => 'product_type',
+                    'field'    => 'slug',
+                    'terms'    => 'domain',
+                ),
+            ),
+        );
+
+        $categories = [
+            'deal'      => __('Free for You','emyui'),
+            'country'   => __('Country domains','emyui'),
+            'generic'   => __('Generic domains','emyui')
+        ];
+
+        $domains = [];
+        $query = new WP_Query($args);
+        if ($query->have_posts()) {
+            while ($query->have_posts()) {
+                $query->the_post();
+                global $product;
+                $tld = get_post_meta(get_the_ID(), '_tld_domain', true);
+                $category = get_post_meta(get_the_ID(), '_tld_categories', true);
+                if (!isset($domains[$category])) {
+                    $domains[$category] = [];
+                }
+                $domains[$category][] = [
+                    'tld' => $tld,
+                    'product_id' => $product->get_id(),
+                    'price'      => $product->get_regular_price()
+                ];
             }
+            wp_reset_postdata();
         }
-        echo '</div>';
-        echo '</div>';
+        ?>
+        <div class="content-widget">
+            <div class="stats-wrapper mt-0">
+                <div class="row">
+                    <?php
+                    $first = true; 
+                    foreach ($categories as $key => $heading) {
+                        if (!empty($domains[$key])) {
+                            echo '<div class="col-md-12"><h3>' . esc_html($heading) . '</h3></div>';
+                            echo '<div class="row row-width">';
+                            $count = 0;
+                            foreach ($domains[$key] as $domain) {
+                                $count++;
+                                $extra_class = ($count > 16) ? 'hidden-domain' : '';
+                                $active_class = ($first && $count == 1) ? 'emyui-active' : '';
+                                ?>
+                                <div class="col-md-3 <?php echo esc_attr($extra_class); ?>">
+                                    <a href="javascript:void(0);" data-tld="<?php echo esc_attr($domain['tld']); ?>" class="<?php echo esc_attr($active_class); ?> emyui-select-domain" data-product_id="<?php echo esc_attr($domain['product_id']); ?>">
+                                        <div class="box-with-shadow numberbox border-opacity">
+                                            <h3 class="title"><?php echo esc_html($domain['tld']); ?></h3>
+                                            <p class="sub-text mb-0"><?php echo wc_price($domain['price']); ?></p>
+                                        </div>
+                                    </a>
+                                </div>
+                                <?php
+                            }
+                            echo '</div>';
+                            if($count > 15) {
+                                echo '<button class="domain-view-more-btn btn btn-primary">'.__('View More', 'emyui').'</button>';
+                            }
+                            $first = false;
+                        }
+                    }
+                    ?>
+                </div>
+            </div>
+        </div>
+        <?php
         return ob_get_clean();
     }
 
