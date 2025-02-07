@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container emyui-container">
 	<div class="row justify-content-start mega-menu-header emyui-domain">
 		<div class="col-lg-6 col-md-6 col-sm-6 mb-9 pr-md-0">
 			<h4 class="title text-center text-white">
@@ -38,7 +38,7 @@
 							</button>
 						</div>
 					</div>
-					<span class="emyui-error-msg"></span>
+					<span class="emyui-error-msg error"></span>
 				</form>
 			</div>
 			<div class="form-bottom excerpt text-center"></div>

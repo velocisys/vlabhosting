@@ -217,6 +217,20 @@ jQuery(document).ready(function($) {
         $(this).hide();
     });
 
+    /**
+     * 02-08-2025
+     * 
+     * Select domain
+     **/
+    jQuery(document).on("click", ".emyui-select-domain", function () {
+        jQuery(".emyui-select-domain").removeClass("emyui-active");
+        jQuery(this).addClass("emyui-active");
+        jQuery([document.documentElement, document.body]).animate({
+            scrollTop: jQuery('body').offset().top
+        }, 500);
+        jQuery('input[name="domain"]').first().focus();
+    });
+
 });
 
 /**
